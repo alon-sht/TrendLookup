@@ -5,7 +5,7 @@ import plotly.express as px
 import numpy as np
 from scipy.stats import spearmanr
 import streamlit as st
-st.set_page_config(layout="wide")
+st.set_page_config(layout="wide",)
 hide_streamlit_style = """
             <style>
             #MainMenu {visibility: hidden;}
@@ -76,8 +76,8 @@ if check_password():
     
     corr_plot=px.imshow(df_top_corr,text_auto=".2f",template='plotly_white')
     corr_plot.update_layout(autosize=True,height=900)
-    corr_plot.update_xaxes(showticklabels=False)
-    corr_plot.update_yaxes(showticklabels=False)
+    corr_plot.update_xaxes(showticklabels=False,showgrid=False)
+    corr_plot.update_yaxes(showticklabels=False,showgrid=False)
     data.subheader("Correlation Matrix")
     data.text("Hover over the plot to see OTU names")
     data.plotly_chart(corr_plot,use_container_width=True)
