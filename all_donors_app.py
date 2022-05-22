@@ -43,15 +43,7 @@ def check_password():
         return True
 
 if check_password():
-    THEMES = [
-    "light",
-    "dark",
-    "green",
-    "blue",
-    ]
-    cols=st.beta_columns(len(THEMES))
-    for col, theme in zip(cols, THEMES):
-        col.write(f"<p align=center>{theme_descriptor}</p>", unsafe_allow_html=True)
+
     st.title("Trend Analysis")
     main=st.container()
     data=st.container()
