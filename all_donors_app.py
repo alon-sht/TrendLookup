@@ -2,13 +2,13 @@
 import pandas as pd
 import os
 import plotly.express as px
-
+import numpy as np
 from scipy.stats import spearmanr
 import streamlit as st
 st.set_page_config(layout="wide")
 hide_streamlit_style = """
             <style>
-            
+            #MainMenu {visibility: hidden;}
             footer {visibility: hidden;}
             </style>
             """
@@ -43,13 +43,16 @@ def check_password():
         return True
 
 if check_password():
-    st.title("Correlations")
+    st.title("Trend Analysis")
     main=st.container()
     data=st.container()
-
+    level=main.radio(label='Pick level to look at', options=[5,6], index=0)
 
     wd=""
-    file="all_donors L6.csv"
+    if level==6:
+        file="all_donors L6.csv"
+    elif level==5:
+        file="all_donors L5.csv"
     df=pd.read_csv(os.path.join(wd,file)).rename(columns={"#OTU ID":"OTU",
                                                     "0":"RA"})[['OTU','RA','ID','Donor','Experiment']]
     sorter=df.groupby("OTU").agg({'RA':'mean'}).sort_values("RA",ascending=False).index.tolist()
@@ -65,14 +68,44 @@ if check_password():
     fig_all=px.box(df_top,y='OTU',x='RA',height=900)
     fig_all.update_traces(boxmean=True,orientation='h')
     fig_all.update_yaxes(autorange="reversed",dtick=1)
+    
     data.plotly_chart(fig_all,use_container_width=True)
-
+    df1=df.pivot(index=["ID", "Donor", "Experiment"], columns=["OTU"], values="RA")
+    df_top_corr=df_top.pivot(index=["ID", "Donor", "Experiment"], columns=["OTU"], values="RA").corr(method='spearman')
+    df_top_corr=df_top_corr.mask(np.tril(np.ones(df_top_corr.shape)).astype(np.bool))
+    
+    corr_plot=px.imshow(df_top_corr,text_auto=".2f",template='plotly_white')
+    corr_plot.update_layout(autosize=True,height=900)
+    corr_plot.update_xaxes(showticklabels=False)
+    corr_plot.update_yaxes(showticklabels=False)
+    data.subheader("Correlation Matrix")
+    data.text("Hover over the plot to see OTU names")
+    data.plotly_chart(corr_plot,use_container_width=True)
+    df_top_corr.index.name='OTU1'
+    df_top_corr_new=df_top_corr.reset_index().melt(id_vars='OTU1',value_vars=df_top_corr.columns).sort_values('value',ascending=False).dropna()
+    df_top_corr_new['value']=df_top_corr_new['value'].round(3)
+    df_top_corr_new=df_top_corr_new[df_top_corr_new['value']<1]
+    df_top_corr_new['x']=df_top_corr_new['OTU1'].astype(str)+df_top_corr_new['OTU'].astype(str)
+    df_top_corr_new['abs']=abs(df_top_corr_new['value'])
+    df_top_corr_new["Correlation"] = np.where(df_top_corr_new["value"]<0, 'Negative', 'Positive')
+    data.subheader("Top Correlations")
+    data.text("Hover over the plot to see OTU names")
+    top_corr=data.slider(label='Number of top correlations to show',min_value=1,max_value=len(df['OTU'].unique()),value=50)
+    df_top_corr_new=df_top_corr_new.sort_values('abs',ascending=False).head(top_corr).sort_values('value',ascending=False)
+    top_corr_plot=px.bar(df_top_corr_new,x='x',y='value',hover_data=['OTU','OTU1'],color='Correlation')
+    top_corr_plot.update_xaxes(showticklabels=False)
+    data.plotly_chart(top_corr_plot,use_container_width=True)
+    
+    
+    
+    
+    
     st.markdown("""---""")
     st.subheader("Select Bacteria to Compare")
     x=st.selectbox(label="Bacteria 1",options=sorter[:top_val])
     y=st.selectbox(label="Bacteria 2",options=sorter[:top_val],index=1)
     config = {"responsive": True, "toImageButtonOptions": {"format": "svg", }}
-    df2_piv=df.pivot(index=["ID", "Donor", "Experiment"], columns=["OTU"], values="RA").reset_index()
+    df2_piv=df1.reset_index()
     df2_piv["ratio"]=df2_piv[x]/df2_piv[y]
     title=f"{x.split(';')[-1]} to {y.split(';')[-1]} ratio per donor"
     def print_corr(df,x,y,param,where):
@@ -119,9 +152,11 @@ if check_password():
     widget1,widget2=st.columns(2)
     split_by=widget1.selectbox(label="Group By",options=[None,'ID','Donor','Experiment'],index=2)
     color_by2=widget2.selectbox(label="Color By",options=[None,'ID','Donor','Experiment'],index=0)
-    fig3=px.box(df2_piv,x=split_by,y="ratio",hover_data=["ID","Experiment"],color=color_by2)
+    fig3=px.box(df2_piv,x=split_by,y="ratio",hover_data=["ID","Experiment"],color=color_by2,)
     fig3.update_xaxes(matches=None,autorange=True)
     fig3.update_layout(boxmode='group',boxgap=0)
     fig3.layout.yaxis.title=f"{x.split(';')[-1]}:{y.split(';')[-1]} ratio"
 
     st.plotly_chart(fig3,use_container_width=True)
+
+# %%
