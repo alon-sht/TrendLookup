@@ -57,7 +57,10 @@ if check_password():
     elif level=='5_all':
         file='all_samples L5.csv'
     df=pd.read_csv(os.path.join(wd,file)).rename(columns={"#OTU ID":"OTU",
-                                                    "0":"RA"})[['OTU','RA',"SampleID","DonorName","ExperimentName"]]
+                                                    "0":"RA"})#[['OTU','RA',"SampleID","DonorName","ExperimentName"]]
+    
+    meta_columns=[x for x in df.columns.tolist() if x not in ['OTU','level_1','RA','Notes']]
+    df[meta_columns]=df[meta_columns].astype(str)
     sorter=df.groupby("OTU").agg({'RA':'mean'}).sort_values("RA",ascending=False).index.tolist()
     sorterIndex = dict(zip(sorter, range(len(sorter))))
     df['rank']=df['OTU'].map(sorterIndex)
@@ -73,8 +76,8 @@ if check_password():
     fig_all.update_yaxes(autorange="reversed",dtick=1)
     
     data.plotly_chart(fig_all,use_container_width=True)
-    df1=df.pivot(index=["SampleID", "DonorName", "ExperimentName"], columns=["OTU"], values="RA")
-    df_top_corr=df_top.pivot(index=["SampleID", "DonorName", "ExperimentName"], columns=["OTU"], values="RA").corr(method='spearman')
+    df1=df.pivot(index=meta_columns, columns=["OTU"], values="RA")
+    df_top_corr=df_top.pivot(index=meta_columns, columns=["OTU"], values="RA").corr(method='spearman')
     df_top_corr=df_top_corr.mask(np.tril(np.ones(df_top_corr.shape)).astype(np.bool))
     
     corr_plot=px.imshow(df_top_corr,text_auto=".2f",template='plotly_white')
@@ -110,6 +113,7 @@ if check_password():
     config = {"responsive": True, "toImageButtonOptions": {"format": "svg", }}
     df2_piv=df1.reset_index()
     df2_piv["ratio"]=df2_piv[x]/df2_piv[y]
+    st.write(df2_piv.astype(str))
     title=f"{x.split(';')[-1]} to {y.split(';')[-1]} ratio per donor"
     def print_corr(df,x,y,param,where):
         corr=spearmanr(df[[x,y]])
@@ -134,32 +138,49 @@ if check_password():
     st.plotly_chart(fig1,use_container_width=True)
     st.markdown("""---""")
     st.subheader("Correlations")
-    color=st.selectbox(label="Color By",options=[None,"SampleID","DonorName","ExperimentName"],index=2)
+    color=st.selectbox(label="Color By",options=[None]+meta_columns,index=2)
 
     col1,col2=st.columns(2)
     corr_expander=st.expander(label='Spearman Correlation',expanded=True)
-    fig2_trend=px.scatter(df2_piv,x=x,y=y,color=color,hover_data=["SampleID","ExperimentName"],trendline="ols",trendline_scope="overall")
+    fig2_trend=px.scatter(df2_piv,x=x,y=y,color=color,hover_data=meta_columns,trendline="ols",trendline_scope="overall")
     fig2_trend.layout.xaxis.title=fig2_trend.layout.xaxis.title['text'].split(';')[-1]
     fig2_trend.layout.yaxis.title=fig2_trend.layout.yaxis.title['text'].split(';')[-1]
     col1.plotly_chart(fig2_trend,use_container_width=True)    
     print_corr(df2_piv,x,y,'All Donor',corr_expander)
-    fig2_trend_each=px.scatter(df2_piv,x=x,y=y,color=color,hover_data=["SampleID","ExperimentName"],trendline="ols",)
+    fig2_trend_each=px.scatter(df2_piv,x=x,y=y,color=color,hover_data=meta_columns,trendline="ols",)
     fig2_trend_each.layout.xaxis.title=fig2_trend_each.layout.xaxis.title['text'].split(';')[-1]
     fig2_trend_each.layout.yaxis.title=fig2_trend_each.layout.yaxis.title['text'].split(';')[-1]
 
     col2.plotly_chart(fig2_trend_each,use_container_width=True)        
-    for donor in df2_piv["DonorName"].unique():
-        print_corr(df2_piv[df2_piv["DonorName"].isin([donor])],x,y,donor,corr_expander)
+    for donor in df2_piv[color].unique():
+        print_corr(df2_piv[df2_piv[color].isin([donor])],x,y,donor,corr_expander)
         
     st.subheader(f"{x.split(';')[-1]}:{y.split(';')[-1]} ratio")
     widget1,widget2=st.columns(2)
-    split_by=widget1.selectbox(label="Group By",options=[None,"SampleID","DonorName","ExperimentName"],index=2)
-    color_by2=widget2.selectbox(label="Color By",options=[None,"SampleID","DonorName","ExperimentName"],index=0)
-    fig3=px.box(df2_piv,x=split_by,y="ratio",hover_data=["SampleID","ExperimentName"],color=color_by2,)
+    split_by=widget1.selectbox(label="Group By",options=[None]+meta_columns,index=0)
+    color_by2=widget2.selectbox(label="Color By",options=[None]+meta_columns,index=0)
+    fig3=px.box(df2_piv,x=split_by,y="ratio",hover_data=meta_columns,color=color_by2,)
     fig3.update_xaxes(matches=None,autorange=True)
     fig3.update_layout(boxmode='group',boxgap=0)
     fig3.layout.yaxis.title=f"{x.split(';')[-1]}:{y.split(';')[-1]} ratio"
 
     st.plotly_chart(fig3,use_container_width=True)
+    
+    bac_picker,correlate_to,color=st.columns(3)
+    correlate_to_selection=correlate_to.selectbox(label="Correlate to",options=meta_columns,index=0)
+    bacteria_picker=bac_picker.selectbox(label="Pick Bacteria",options=sorter[:top_val],index=0)
+    color_by_picker=color.selectbox(label="Color by",options=[None]+meta_columns,index=0)
+    try:
+        df2_piv[correlate_to_selection]=df2_piv[correlate_to_selection].astype(float)
+        
+    except:
+        pass
+    xx=px.scatter(df2_piv.sort_values(by=correlate_to_selection),x=correlate_to_selection,y=bacteria_picker,hover_data=meta_columns,color=color_by_picker)
+    #trendline="ols",trendline_scope="overall")
+    # fig4_trend=px.scatter(df2_piv,x=correlate_to,y=bac_picker,)#hover_data=meta_columns)#,trendline="ols",trendline_scope="overall")
+    # fig4_trend.layout.xaxis.title=fig4_trend.layout.xaxis.title['text'].split(';')[-1]
+    # fig4_trend.layout.yaxis.title=fig4_trend.layout.yaxis.title['text'].split(';')[-1]
+    st.plotly_chart(xx,use_container_width=True)  
+    
 
 # %%
