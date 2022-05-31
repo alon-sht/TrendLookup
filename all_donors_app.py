@@ -47,15 +47,17 @@ if check_password():
     st.title("Trend Analysis")
     main=st.container()
     data=st.container()
-    level=main.radio(label='Pick level to look at', options=[5,6], index=0)
+    level=main.radio(label='Pick level to look at', options=[5,6,'5_all'], index=0)
 
     wd=""
     if level==6:
         file="all_donors L6.csv"
     elif level==5:
         file="all_donors L5.csv"
+    elif level=='5_all':
+        file='all_samples L5.csv'
     df=pd.read_csv(os.path.join(wd,file)).rename(columns={"#OTU ID":"OTU",
-                                                    "0":"RA"})[['OTU','RA','ID','Donor','Experiment']]
+                                                    "0":"RA"})[['OTU','RA',"SampleID","DonorName","ExperimentName"]]
     sorter=df.groupby("OTU").agg({'RA':'mean'}).sort_values("RA",ascending=False).index.tolist()
     sorterIndex = dict(zip(sorter, range(len(sorter))))
     df['rank']=df['OTU'].map(sorterIndex)
@@ -71,8 +73,8 @@ if check_password():
     fig_all.update_yaxes(autorange="reversed",dtick=1)
     
     data.plotly_chart(fig_all,use_container_width=True)
-    df1=df.pivot(index=["ID", "Donor", "Experiment"], columns=["OTU"], values="RA")
-    df_top_corr=df_top.pivot(index=["ID", "Donor", "Experiment"], columns=["OTU"], values="RA").corr(method='spearman')
+    df1=df.pivot(index=["SampleID", "DonorName", "ExperimentName"], columns=["OTU"], values="RA")
+    df_top_corr=df_top.pivot(index=["SampleID", "DonorName", "ExperimentName"], columns=["OTU"], values="RA").corr(method='spearman')
     df_top_corr=df_top_corr.mask(np.tril(np.ones(df_top_corr.shape)).astype(np.bool))
     
     corr_plot=px.imshow(df_top_corr,text_auto=".2f",template='plotly_white')
@@ -122,38 +124,38 @@ if check_password():
     split_by_donor=st.checkbox("Split plot by Donor")
 
     if split_by_donor:
-        split='Donor'
+        split="DonorName"
     else:
         split=None
 
-    fig1=px.bar(df2_piv,x="ID",y=[x,y],facet_col=split)
+    fig1=px.bar(df2_piv,x="SampleID",y=[x,y],facet_col=split)
     fig1.update_xaxes(matches=None)
     fig1.update_layout(showlegend=False)
     st.plotly_chart(fig1,use_container_width=True)
     st.markdown("""---""")
     st.subheader("Correlations")
-    color=st.selectbox(label="Color By",options=[None,'ID','Donor','Experiment'],index=2)
+    color=st.selectbox(label="Color By",options=[None,"SampleID","DonorName","ExperimentName"],index=2)
 
     col1,col2=st.columns(2)
     corr_expander=st.expander(label='Spearman Correlation',expanded=True)
-    fig2_trend=px.scatter(df2_piv,x=x,y=y,color=color,hover_data=["ID","Experiment"],trendline="ols",trendline_scope="overall")
+    fig2_trend=px.scatter(df2_piv,x=x,y=y,color=color,hover_data=["SampleID","ExperimentName"],trendline="ols",trendline_scope="overall")
     fig2_trend.layout.xaxis.title=fig2_trend.layout.xaxis.title['text'].split(';')[-1]
     fig2_trend.layout.yaxis.title=fig2_trend.layout.yaxis.title['text'].split(';')[-1]
     col1.plotly_chart(fig2_trend,use_container_width=True)    
     print_corr(df2_piv,x,y,'All Donor',corr_expander)
-    fig2_trend_each=px.scatter(df2_piv,x=x,y=y,color=color,hover_data=["ID","Experiment"],trendline="ols",)
+    fig2_trend_each=px.scatter(df2_piv,x=x,y=y,color=color,hover_data=["SampleID","ExperimentName"],trendline="ols",)
     fig2_trend_each.layout.xaxis.title=fig2_trend_each.layout.xaxis.title['text'].split(';')[-1]
     fig2_trend_each.layout.yaxis.title=fig2_trend_each.layout.yaxis.title['text'].split(';')[-1]
 
     col2.plotly_chart(fig2_trend_each,use_container_width=True)        
-    for donor in df2_piv['Donor'].unique():
-        print_corr(df2_piv[df2_piv['Donor'].isin([donor])],x,y,donor,corr_expander)
+    for donor in df2_piv["DonorName"].unique():
+        print_corr(df2_piv[df2_piv["DonorName"].isin([donor])],x,y,donor,corr_expander)
         
     st.subheader(f"{x.split(';')[-1]}:{y.split(';')[-1]} ratio")
     widget1,widget2=st.columns(2)
-    split_by=widget1.selectbox(label="Group By",options=[None,'ID','Donor','Experiment'],index=2)
-    color_by2=widget2.selectbox(label="Color By",options=[None,'ID','Donor','Experiment'],index=0)
-    fig3=px.box(df2_piv,x=split_by,y="ratio",hover_data=["ID","Experiment"],color=color_by2,)
+    split_by=widget1.selectbox(label="Group By",options=[None,"SampleID","DonorName","ExperimentName"],index=2)
+    color_by2=widget2.selectbox(label="Color By",options=[None,"SampleID","DonorName","ExperimentName"],index=0)
+    fig3=px.box(df2_piv,x=split_by,y="ratio",hover_data=["SampleID","ExperimentName"],color=color_by2,)
     fig3.update_xaxes(matches=None,autorange=True)
     fig3.update_layout(boxmode='group',boxgap=0)
     fig3.layout.yaxis.title=f"{x.split(';')[-1]}:{y.split(';')[-1]} ratio"
