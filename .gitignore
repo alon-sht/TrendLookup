@@ -1,1 +1,4 @@
-.streamlit/secrets.toml
+*.streamlit/secrets.toml
+*all_donors L7.csv
+*all_samples L6.csv
+*all_samples L5.csv
