@@ -5,7 +5,10 @@ import plotly.express as px
 import numpy as np
 from scipy.stats import spearmanr
 import streamlit as st
-st.set_page_config(layout="wide",page_title="TrendAnalysis",page_icon='fav.ico')
+from PIL import Image
+im = Image.open("fav.ico")
+
+st.set_page_config(layout="wide",page_title="TrendAnalysis",page_icon=im)
 hide_streamlit_style = """
             <style>
             
