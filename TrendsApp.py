@@ -7,6 +7,7 @@ from scipy.stats import spearmanr
 import streamlit as st
 from PIL import Image
 from src.check_password import check_password
+from io import BytesIO
 
 st.set_page_config(layout="wide",page_title="TrendAnalysis",page_icon=Image.open("fav.ico"))
 hide_streamlit_style = """
@@ -28,14 +29,20 @@ st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 
 
 def st_main_header():
+    global sample_data_message,message_box
     st.title("Trend Analysis")
+    st.sidebar.image("Mybiotics_LOGO - Large.png",width=350)
+    st.sidebar.markdown("""---""")
+    message_box=st.container()
+    sample_data_message=message_box.error("#### Sample Data loaded - to use custom data upload file with data using the \"File Upload\" widget in the sidebar")
+    
+
     
     
 def st_sidebar_pick_file():
     #Sidebar dropdown to pick file to look at 
     global level,df
-    st.sidebar.image("Mybiotics_LOGO - Large.png",width=350)
-    st.sidebar.markdown("""---""")
+
     file_select=st.sidebar.container()
     file_options={  'Level 3 (Class) - Stool Only':"all_donors L3.csv",
                     'Level 4 (Order) - Stool Only':"all_donors L4.csv",
@@ -47,16 +54,31 @@ def st_sidebar_pick_file():
                     'Level 5 (Family) - All Samples':'all_samples L5.csv',
                     }
     
-    level=file_select.selectbox(label='Pick file to use', options=list(file_options.keys()), index=0)#'6 - All Samples'
+    level=file_select.selectbox(label='Pick file to use', options=[None]+list(file_options.keys()), index=0)#'6 - All Samples'
     file_select.markdown("""---""")
     wd=''
-    try:
-        file=file_options[level]
-        df=pd.read_csv(os.path.join(wd,file))
-    except:
-        st.warning("This file doesn't currently work")
+    df=pd.DataFrame(columns=['OTU','RA'])
+    if level is not None:
+        try:
+            file=file_options[level]
+            df=pd.read_csv(os.path.join(wd,file))
+        except:
+            st.warning("This file doesn't currently work")
+            df=pd.DataFrame()
     
     
+def st_sidebar_upload_file():
+    global upload_data_widget,df
+    upload_column=st.sidebar.container()
+    upload_column.subheader("File Upload")
+    upload_column.text("Upload file to start working")
+    upload_data_widget=upload_column.file_uploader(label='Upload File', type=['csv'])
+    df=pd.read_csv('sample_data.csv')
+    if upload_data_widget:
+        df=pd.read_csv(BytesIO(upload_data_widget.getvalue()))
+        sample_data_message.success("Custom Data Loaded")
+    upload_column.markdown("""---""")
+        
     
 def st_main_raw_data():
     # Show raw data table in main container
@@ -80,6 +102,28 @@ def st_main_raw_data():
     raw_data.write(df.astype(str),use_container_width=True)
     raw_data.markdown("""---""")
     # data=st.container()
+
+def show_ra_of_all():
+    
+    ra_all=st.container()
+    ra_all.subheader("Relative Abundance of All Samples")
+    ra_all.text("For many samples (>30) this might be very slow")
+    ra_all.text(f"You currently have {len(df_filtered['SampleID'].unique())} samples after applying filters with {len(df_filtered['OTU'].unique())} unique OTUs")
+    load_plot=ra_all.checkbox("Load Plot",value=False)
+    ra_all_plot=ra_all.container()
+    if load_plot:
+        ra_all_legend=ra_all_plot.checkbox("Show Legend on Plot",value=False)
+        fig=px.bar(df,x='SampleID',y='RA',color='OTU',barmode='stack',)
+        fig.update_xaxes(dtick=1,)
+        # fig.show(renderer="svg")
+        fig.update_layout(showlegend=ra_all_legend)
+        ra_all_plot.plotly_chart(fig,use_container_width=True)    
+    else:
+        ra_all_plot.empty()
+    
+    
+    
+    ra_all.markdown("""---""")
     
     
     
@@ -299,9 +343,12 @@ def st_main_correlation_scatter_between_bacteria_and_metadata_parameter():
 def main():
     #Main part of function
     st_main_header()
-    st_sidebar_pick_file()
+    # st_sidebar_pick_file()
+    st_sidebar_upload_file()
+    # if upload_data_widget:
     st_main_raw_data()
     st_sidebar_data_filters()
+    show_ra_of_all()
     st_sidebar_top_bacteria_slider()
     st_main_top_bacteria_plot()
     st_main_correlation_heatmap_between_top_bac()
