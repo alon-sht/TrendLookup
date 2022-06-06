@@ -41,10 +41,11 @@ def st_sidebar_pick_file():
                     'Level 4 (Order) - Stool Only':"all_donors L4.csv",
                     'Level 5 (Family) - Stool Only':"all_donors L5.csv",
                     'Level 6 (Genus) - Stool Only':"all_donors L6.csv",
-                    'Level 7 (Species) - Stool Only':"all_donors L7.csv",
+                    # 'Level 7 (Species) - Stool Only':"all_donors L7.csv",
                     'Level 3 (Class) - All Samples':'all_samples L3.csv',
                     'Level 4 (Order) - All Samples':'all_samples L4.csv',
-                    'Level 5 (Family) - All Samples':'all_samples L5.csv',}
+                    'Level 5 (Family) - All Samples':'all_samples L5.csv',
+                    }
     
     level=file_select.selectbox(label='Pick file to use', options=list(file_options.keys()), index=0)#'6 - All Samples'
     file_select.markdown("""---""")
@@ -64,8 +65,17 @@ def st_main_raw_data():
     raw_data=st.container()
     meta_columns=[x for x in df.columns.tolist() if x not in ['OTU','level_1','RA','Notes']]
     df[meta_columns]=df[meta_columns].astype(str)
-    sorter=df.groupby("OTU").agg({'RA':'mean'}).sort_values("RA",ascending=False).index.tolist()
+    sorter_mean=df.groupby("OTU").agg({'RA':'mean'}).sort_values("RA",ascending=False).index.tolist()
+    sorter_median=df.groupby("OTU").agg({'RA':'mean'}).sort_values("RA",ascending=False).index.tolist()
+    sorter_choose=st.sidebar.radio("Sort samples by Mean or Median",options=["Mean","Median"],index=0,horizontal=True)
+    st.sidebar.markdown("""---""")
+    if sorter_choose=="Mean":
+        sorter=sorter_mean
+    elif sorter_choose=="Median":
+        sorter=sorter_median
     sorterIndex = dict(zip(sorter, range(len(sorter))))
+    df['ind']=df['OTU'].map(sorterIndex)
+    df.sort_values(by='ind',inplace=True)
     raw_data.subheader("Raw Data")
     raw_data.write(df.astype(str),use_container_width=True)
     raw_data.markdown("""---""")
@@ -111,9 +121,10 @@ def st_main_top_bacteria_plot():
     top_bacteria_boxplot=st.container()
     top_bacteria_boxplot.subheader(f"Top {top_val} bacteria (ordered by mean)")
     top_bacteria_boxplot.text("Change number of top bacteria by using the slider in the sidebar")
-    fig_all=px.box(df_top,y='OTU',x='RA',height=900)
-    fig_all.update_traces(boxmean=True,orientation='h')
-    fig_all.update_yaxes(autorange="reversed",dtick=1)
+    fig_all=px.box(df_top,y='OTU',x='RA',height=900,)#template='plotly_white')
+    fig_all.update_traces(boxmean=True,orientation='h',)
+    fig_all.update_yaxes(autorange="reversed",dtick=1,)
+    fig_all.update_xaxes(title='Relative Abundance')
     top_bacteria_boxplot.plotly_chart(fig_all,use_container_width=True)
     top_bacteria_boxplot.markdown("""---""")
     
@@ -153,8 +164,10 @@ def st_main_top_correlations_plot():
     top_correlation_plot.text("Hover over the plot to see OTU names")
     top_correlation_plot.text("Change number of correlations shown by using the slider in the sidebar")
     df_top_corr_new=df_top_corr_new.sort_values('abs',ascending=False).head(top_corr).sort_values('value',ascending=False)
-    top_corr_plot=px.bar(df_top_corr_new,x='x',y='value',hover_data=['OTU','OTU1'],color='Correlation')
-    top_corr_plot.update_xaxes(showticklabels=False)
+    top_corr_plot=px.bar(df_top_corr_new,x='x',y='value',hover_data=['OTU','OTU1'],color='Correlation',text_auto=True)
+    top_corr_plot.update_traces(textfont_size=12, textangle=0, textposition="outside", )#cliponaxis=False)
+    top_corr_plot.update_xaxes(showticklabels=False,title='OTU Pair')
+    top_corr_plot.update_yaxes(title='Correlation')
     top_correlation_plot.plotly_chart(top_corr_plot,use_container_width=True)
     top_correlation_plot.markdown("""---""")
     
@@ -198,6 +211,7 @@ def st_main_ra_plot_of_selected_bacteria():
 
     fig1=px.bar(df2_piv,x="SampleID",y=[x,y],facet_col=split)
     fig1.update_xaxes(matches=None)
+    fig1.update_yaxes(title="Relative Abundance")
     fig1.update_layout(showlegend=False)
     ra_of_selected_bacteria.plotly_chart(fig1,use_container_width=True)
     ra_of_selected_bacteria.markdown("""---""")
@@ -237,7 +251,11 @@ def st_main_ratio_between_selected_bacteria_boxplot():
     widget1,widget2=ratio_between_selected_bacteria.columns(2)
     split_by=widget1.selectbox(label="Group By",options=[None]+meta_columns,index=0)
     color_by2=widget2.selectbox(label="Color By",options=[None]+meta_columns,index=0)
-    fig3=px.box(df2_piv,x=split_by,y="ratio",hover_data=meta_columns,color=color_by2,)
+    box_or_strip=widget2.selectbox(label="Box or Strip Plot",options=['Box Plot','Strip Plot'],index=0)
+    if box_or_strip=="Box Plot":
+        fig3=px.box(df2_piv,x=split_by,y="ratio",hover_data=meta_columns,color=color_by2)
+    elif box_or_strip=="Strip Plot":
+        fig3=px.strip(df2_piv,x=split_by,y="ratio",hover_data=meta_columns,color=color_by2)
     fig3.update_xaxes(matches=None,autorange=True)
     fig3.update_layout(boxmode='group',boxgap=0)
     fig3.layout.yaxis.title=f"{x.split(';')[-1]}:{y.split(';')[-1]} ratio"
