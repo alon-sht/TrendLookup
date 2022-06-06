@@ -111,9 +111,11 @@ def st_sidebar_data_filters():
 
 def st_sidebar_top_bacteria_slider():
     #Slider to select number of top bacteria to show
-    global top_val, df_top
+    global top_val, df_top,font_size
     top_val=st.sidebar.slider(label='Select number of bacteria to show',min_value=1,max_value=len(df_filtered['OTU'].unique()),value=10)
     df_top=df_filtered[df_filtered['OTU'].isin(sorter[:top_val])]
+    
+    font_size=st.sidebar.slider(label='Font Size',min_value=1,max_value=25,value=12)
     
 
 def st_main_top_bacteria_plot():
@@ -122,6 +124,7 @@ def st_main_top_bacteria_plot():
     top_bacteria_boxplot.subheader(f"Top {top_val} bacteria (ordered by mean)")
     top_bacteria_boxplot.text("Change number of top bacteria by using the slider in the sidebar")
     fig_all=px.box(df_top,y='OTU',x='RA',height=900,)#template='plotly_white')
+    fig_all.update_layout(font=dict(size=font_size,))
     fig_all.update_traces(boxmean=True,orientation='h',)
     fig_all.update_yaxes(autorange="reversed",dtick=1,)
     fig_all.update_xaxes(title='Relative Abundance')
@@ -141,6 +144,7 @@ def st_main_correlation_heatmap_between_top_bac():
     corr_plot.update_layout(autosize=True,height=900)
     corr_plot.update_xaxes(showticklabels=False,showgrid=False)
     corr_plot.update_yaxes(showticklabels=False,showgrid=False)
+    corr_plot.update_layout(font=dict(size=font_size,))
     top_bac_correlation_heatmap.subheader(f"Correlation Matrix of the top {top_val} bacteria")
     top_bac_correlation_heatmap.text("Hover over the plot to see OTU names")
     top_bac_correlation_heatmap.text("Change number of shown bacteria by using the slider in the sidebar")
@@ -164,10 +168,12 @@ def st_main_top_correlations_plot():
     top_correlation_plot.text("Hover over the plot to see OTU names")
     top_correlation_plot.text("Change number of correlations shown by using the slider in the sidebar")
     df_top_corr_new=df_top_corr_new.sort_values('abs',ascending=False).head(top_corr).sort_values('value',ascending=False)
-    top_corr_plot=px.bar(df_top_corr_new,x='x',y='value',hover_data=['OTU','OTU1'],color='Correlation',text_auto=True)
+    text_on_plot=top_correlation_plot.checkbox("Show text on plot", value=False)
+    top_corr_plot=px.bar(df_top_corr_new,x='x',y='value',hover_data=['OTU','OTU1'],color='Correlation',text_auto=text_on_plot)
     top_corr_plot.update_traces(textfont_size=12, textangle=0, textposition="outside", )#cliponaxis=False)
     top_corr_plot.update_xaxes(showticklabels=False,title='OTU Pair')
     top_corr_plot.update_yaxes(title='Correlation')
+    top_corr_plot.update_layout(font=dict(size=font_size,))
     top_correlation_plot.plotly_chart(top_corr_plot,use_container_width=True)
     top_correlation_plot.markdown("""---""")
     
@@ -201,7 +207,7 @@ def st_main_ra_plot_of_selected_bacteria():
     df2_piv["ratio"]=df2_piv[x]/df2_piv[y]
 
     
-    ra_of_selected_bacteria.subheader("Relative abundance of selected bacteria")
+    ra_of_selected_bacteria.subheader(f"Relative abundance of {x.split(';')[-1]} and {y.split(';')[-1]}")
     split_by_donor=ra_of_selected_bacteria.checkbox("Split plot by Donor")
 
     if split_by_donor:
@@ -211,8 +217,9 @@ def st_main_ra_plot_of_selected_bacteria():
 
     fig1=px.bar(df2_piv,x="SampleID",y=[x,y],facet_col=split)
     fig1.update_xaxes(matches=None)
-    fig1.update_yaxes(title="Relative Abundance")
+    # fig1.update_yaxes(title="Relative Abundance")
     fig1.update_layout(showlegend=False)
+    fig1.update_layout(font=dict(size=font_size,))
     ra_of_selected_bacteria.plotly_chart(fig1,use_container_width=True)
     ra_of_selected_bacteria.markdown("""---""")
 
@@ -229,11 +236,13 @@ def st_main_correlation_scatter_between_selected_baceria():
     fig2_trend=px.scatter(df2_piv,x=x,y=y,color=color,hover_data=meta_columns,trendline="ols",trendline_scope="overall")
     fig2_trend.layout.xaxis.title=fig2_trend.layout.xaxis.title['text'].split(';')[-1]
     fig2_trend.layout.yaxis.title=fig2_trend.layout.yaxis.title['text'].split(';')[-1]
+    fig2_trend.update_layout(font=dict(size=font_size,))
     col1.plotly_chart(fig2_trend,use_container_width=True)    
     print_corr(df2_piv,x,y,'Overall',corr_expander)
     fig2_trend_each=px.scatter(df2_piv,x=x,y=y,color=color,hover_data=meta_columns,trendline="ols",)
     fig2_trend_each.layout.xaxis.title=fig2_trend_each.layout.xaxis.title['text'].split(';')[-1]
     fig2_trend_each.layout.yaxis.title=fig2_trend_each.layout.yaxis.title['text'].split(';')[-1]
+    fig2_trend_each.update_layout(font=dict(size=font_size,))
     col2.plotly_chart(fig2_trend_each,use_container_width=True)        
         
     for donor in df2_piv[color].unique():
@@ -259,6 +268,7 @@ def st_main_ratio_between_selected_bacteria_boxplot():
     fig3.update_xaxes(matches=None,autorange=True)
     fig3.update_layout(boxmode='group',boxgap=0)
     fig3.layout.yaxis.title=f"{x.split(';')[-1]}:{y.split(';')[-1]} ratio"
+    fig3.update_layout(font=dict(size=font_size,))
 
     ratio_between_selected_bacteria.plotly_chart(fig3,use_container_width=True)
     ratio_between_selected_bacteria.markdown("""---""")
@@ -280,6 +290,7 @@ def st_main_correlation_scatter_between_bacteria_and_metadata_parameter():
     except:
         pass
     plot=px.scatter(df2_piv.sort_values(by=correlate_to_selection),x=correlate_to_selection,y=bacteria_picker,hover_data=meta_columns,color=color_by_picker)
+    plot.update_layout(font=dict(size=font_size,))
     plot.layout.yaxis.title=plot.layout.yaxis.title['text'].split(';')[-1]
     correlation_to_metadata_scatter.plotly_chart(plot,use_container_width=True)
 
