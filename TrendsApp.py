@@ -67,7 +67,7 @@ def st_main_raw_data():
     df[meta_columns]=df[meta_columns].astype(str)
     sorter_mean=df.groupby("OTU").agg({'RA':'mean'}).sort_values("RA",ascending=False).index.tolist()
     sorter_median=df.groupby("OTU").agg({'RA':'mean'}).sort_values("RA",ascending=False).index.tolist()
-    sorter_choose=st.sidebar.radio("Sort samples by Mean or Median",options=["Mean","Median"],index=0#,horizontal=True)
+    sorter_choose=st.sidebar.radio("Sort samples by Mean or Median",options=["Mean","Median"],index=0)#,horizontal=True)
     st.sidebar.markdown("""---""")
     if sorter_choose=="Mean":
         sorter=sorter_mean
