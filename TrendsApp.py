@@ -118,6 +118,12 @@ def show_ra_of_all():
         # fig.show(renderer="svg")
         fig.update_layout(showlegend=ra_all_legend)
         ra_all_plot.plotly_chart(fig,use_container_width=True)    
+        li=[]
+        fig.data[0]['showlegend']==False
+        for x in range(10):
+            if fig.data[x]['showlegend']==True:
+                li.append(fig.data[x]['name'])
+        ra_all_plot.text(li)
     else:
         ra_all_plot.empty()
     
@@ -330,7 +336,7 @@ def st_main_correlation_scatter_between_bacteria_and_metadata_parameter():
     correlate_to_selection=correlate_to.selectbox(label="Correlate to",options=meta_columns,index=0)#7
     color_by_picker=color.selectbox(label="Color by",options=[None]+meta_columns,index=2)
     try:
-        df2_piv[correlate_to_selection]=df2_piv[correlate_to_selection].acorrelation_to_metadata_scatterype(float)
+        df2_piv[correlate_to_selection]=df2_piv[correlate_to_selection].astype(float)
     except:
         pass
     plot=px.scatter(df2_piv.sort_values(by=correlate_to_selection),x=correlate_to_selection,y=bacteria_picker,hover_data=meta_columns,color=color_by_picker)
@@ -339,6 +345,28 @@ def st_main_correlation_scatter_between_bacteria_and_metadata_parameter():
     correlation_to_metadata_scatter.plotly_chart(plot,use_container_width=True)
 
 
+
+
+def st_main_correlation_scatter_between_ratio_and_metadata_parameter():
+    # Scatter plot between one selected bacteria and any column in the metadata 
+    ratio_correlation_to_metadata_scatter=st.container()
+    ratio_correlation_to_metadata_scatter.subheader(f"Correlate ratio between selected bacteria with any metadata column")
+    ratio_correlation_to_metadata_scatter.text("Uses the above selected bacteria for the ratios")
+    # bacteria_picker=ratio_correlation_to_metadata_scatter.selectbox(label="Pick Bacteria",options=sorter[:],index=0)
+    correlate_to1,color1=ratio_correlation_to_metadata_scatter.columns(2)
+    correlate_to_selection1=correlate_to1.selectbox(label="Correlate to ",options=meta_columns,index=0)#7
+    color_by_picker1=color1.selectbox(label="Color by ",options=[None]+meta_columns,index=2)
+    try:
+        df2_piv[correlate_to_selection1]=df2_piv[correlate_to_selection1].astype(float)
+    except:
+        pass
+    plot=px.scatter(df2_piv.sort_values(by=correlate_to_selection1),x=correlate_to_selection1,y='ratio',hover_data=meta_columns,color=color_by_picker1)
+    plot.update_layout(font=dict(size=font_size,))
+    plot.layout.yaxis.title=plot.layout.yaxis.title['text'].split(';')[-1]
+    ratio_correlation_to_metadata_scatter.plotly_chart(plot,use_container_width=True)
+    ratio_correlation_to_metadata_scatter.markdown("""---""")
+    
+    
     
 def main():
     #Main part of function
@@ -357,6 +385,7 @@ def main():
     st_main_ra_plot_of_selected_bacteria()
     st_main_correlation_scatter_between_selected_baceria()
     st_main_ratio_between_selected_bacteria_boxplot()
+    st_main_correlation_scatter_between_ratio_and_metadata_parameter()
     st_main_correlation_scatter_between_bacteria_and_metadata_parameter()
     
     
