@@ -99,7 +99,9 @@ def st_main_raw_data():
     df['ind']=df['OTU'].map(sorterIndex)
     df.sort_values(by='ind',inplace=True)
     raw_data.subheader("Raw Data")
-    raw_data.write(df.astype(str),use_container_width=True)
+    show_raw=raw_data.checkbox("Show Raw Data", value=False)
+    if show_raw:
+        raw_data.write(df.astype(str),use_container_width=True)
     raw_data.markdown("""---""")
     # data=st.container()
 
@@ -164,7 +166,11 @@ def st_sidebar_top_bacteria_slider():
     global top_val, df_top,font_size
     top_val=st.sidebar.slider(label='Select number of bacteria to show',min_value=1,max_value=len(df_filtered['OTU'].unique()),value=10)
     df_top=df_filtered[df_filtered['OTU'].isin(sorter[:top_val])]
+    global df_top_corr, df1
     
+    df1=df_filtered.pivot(index=meta_columns, columns=["OTU"], values="RA")
+    df_top_corr=df_top.pivot(index=meta_columns, columns=["OTU"], values="RA").corr(method='spearman')
+    df_top_corr=df_top_corr.mask(np.tril(np.ones(df_top_corr.shape),-1).astype(bool))
     font_size=st.sidebar.slider(label='Font Size',min_value=1,max_value=25,value=12)
     
 
@@ -184,12 +190,8 @@ def st_main_top_bacteria_plot():
     
 def st_main_correlation_heatmap_between_top_bac():
     # Show heatmap of top correlations
-    global df_top_corr, df1
-    top_bac_correlation_heatmap=st.container()
-    df1=df_filtered.pivot(index=meta_columns, columns=["OTU"], values="RA")
-    df_top_corr=df_top.pivot(index=meta_columns, columns=["OTU"], values="RA").corr(method='spearman')
-    df_top_corr=df_top_corr.mask(np.tril(np.ones(df_top_corr.shape),-1).astype(bool))
     
+    top_bac_correlation_heatmap=st.container()
     corr_plot=px.imshow(df_top_corr,text_auto=".2f",template='plotly_white',color_continuous_scale='RdBu')
     corr_plot.update_layout(autosize=True,height=900)
     corr_plot.update_xaxes(showticklabels=False,showgrid=False)
@@ -236,6 +238,9 @@ def st_main_bacteria_to_compare_selection():
     x=compare_bac_selection.selectbox(label="Bacteria 1",options=sorter[:])
     y=compare_bac_selection.selectbox(label="Bacteria 2",options=sorter[:],index=1)
     compare_bac_selection.markdown("""---""")
+    global df2_piv
+    df2_piv=df1.reset_index()
+    df2_piv["ratio"]=df2_piv[x]/df2_piv[y]
     
 def print_corr(df,x,y,param,where):
     # Function to print correlations
@@ -251,10 +256,9 @@ def print_corr(df,x,y,param,where):
 def st_main_ra_plot_of_selected_bacteria():
     # stacked bar chart of RA of the two selected bacteria
     
-    global df2_piv
+    
     ra_of_selected_bacteria=st.container()
-    df2_piv=df1.reset_index()
-    df2_piv["ratio"]=df2_piv[x]/df2_piv[y]
+
 
     
     ra_of_selected_bacteria.subheader(f"Relative abundance of {x.split(';')[-1]} and {y.split(';')[-1]}")
@@ -375,18 +379,33 @@ def main():
     st_sidebar_upload_file()
     # if upload_data_widget:
     st_main_raw_data()
+    plot_to_show=st.radio("Choose Which Plot To Show",options=["Top 10 Bacteria","RA of All Samples","Correlation Matrix of the top bacteria","Top Correlations"])
+    
     st_sidebar_data_filters()
-    show_ra_of_all()
     st_sidebar_top_bacteria_slider()
-    st_main_top_bacteria_plot()
-    st_main_correlation_heatmap_between_top_bac()
-    st_main_top_correlations_plot()
+    if plot_to_show=="Top 10 Bacteria":
+        st_main_top_bacteria_plot()    
+    elif plot_to_show=="RA of All Samples":
+        show_ra_of_all()
+    
+    elif plot_to_show=="Correlation Matrix of the top bacteria":
+        st_main_correlation_heatmap_between_top_bac()    
+    elif plot_to_show=="Top Correlations":    
+        st_main_top_correlations_plot()
+        
     st_main_bacteria_to_compare_selection()
-    st_main_ra_plot_of_selected_bacteria()
-    st_main_correlation_scatter_between_selected_baceria()
-    st_main_ratio_between_selected_bacteria_boxplot()
-    st_main_correlation_scatter_between_ratio_and_metadata_parameter()
-    st_main_correlation_scatter_between_bacteria_and_metadata_parameter()
+    
+    plot_to_show2=st.radio("Choose Which Plots To Show When Comparing Multiple Bacteria",options=["Relative Abundance of both bacteria","Correlations Between Bacteria","Ratios between Bacteria",'Correlate ratio between selected bacteria with any metadata column','Correlate any bacteria with any metadata column'])
+    if plot_to_show2=="Relative Abundance of both bacteria":
+        st_main_ra_plot_of_selected_bacteria()
+    elif plot_to_show2=="Correlations Between Bacteria":
+        st_main_correlation_scatter_between_selected_baceria()
+    elif plot_to_show2=="Ratios between Bacteria":
+        st_main_ratio_between_selected_bacteria_boxplot()
+    elif plot_to_show2=="Correlate ratio between selected bacteria with any metadata column":
+        st_main_correlation_scatter_between_ratio_and_metadata_parameter()
+    elif plot_to_show2=="Correlate any bacteria with any metadata column":
+        st_main_correlation_scatter_between_bacteria_and_metadata_parameter()
     
     
     
