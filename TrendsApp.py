@@ -11,18 +11,18 @@ from io import BytesIO
 
 st.set_page_config(layout="wide",page_title="TrendAnalysis",page_icon=Image.open("fav.ico"))
 hide_streamlit_style = """
-            <style>
-            #MainMenu {visibility: hidden;}
-            footer {visibility: hidden;}
-            [data-testid="stSidebar"][aria-expanded="true"] > div:first-child {
+              <style>
+              #MainMenu {visibility: hidden;}
+              footer {visibility: hidden;}
+              [data-testid="stSidebar"][aria-expanded="true"] > div:first-child {
                      width: 500px;
                      }
-            [data-testid="stSidebar"][aria-expanded="false"] > div:first-child {
+              [data-testid="stSidebar"][aria-expanded="false"] > div:first-child {
                      width: 500px;
                      margin-left: -500px;
                      }
             </style>
-            """
+            """  
 st.markdown(hide_streamlit_style, unsafe_allow_html=True) 
 
 
