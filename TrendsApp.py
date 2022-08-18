@@ -350,7 +350,7 @@ def st_main_correlation_scatter_between_bacteria_and_metadata_parameter():
     bacteria_picker=correlation_to_metadata_scatter.selectbox(label="Pick Bacteria",options=sorter[:],index=0,key='bac_to_correlate_to_meta')
     correlate_to,color=correlation_to_metadata_scatter.columns(2)
     correlate_to_selection=correlate_to.selectbox(label="Correlate to",options=meta_columns,index=loc,key='correleta_to_what_meta_column')#7
-    color_by_picker=color.selectbox(label="Color by",options=[None]+meta_columns,index=loc2,key='color_by_what_meta_column')
+    color_by_picker=color.selectbox(label="Color by(for the Heatmap this is the Y Axis Parameter)",options=[None]+meta_columns,index=loc2,key='color_by_what_meta_column')
     try:
         df2_piv[correlate_to_selection]=df2_piv[correlate_to_selection].astype(float)
     except:
@@ -410,6 +410,7 @@ def save_and_upload_settings():
        from time import strftime
        global save_and_use_settings
        save_and_use_settings=st.sidebar.expander("Save Current Settings Or Upload Saved Settings")
+       st.sidebar.markdown("---")
        settings_to_download = {k: v for k, v in st.session_state.items()
                      if "button" not in k and "file_uploader" not in k and "FormSubmitter" not in k}
        custom_filename=save_and_use_settings.text_input(label='Choose name for the settings file', placeholder ='Leave blank to use current date and time as the file name.',value="")
