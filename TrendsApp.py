@@ -349,11 +349,12 @@ def st_main_correlation_scatter_between_bacteria_and_metadata_parameter():
         loc2=2
     bacteria_picker=correlation_to_metadata_scatter.selectbox(label="Pick Bacteria",options=sorter[:],index=0,key='bac_to_correlate_to_meta')
     correlate_to,color,marker=correlation_to_metadata_scatter.columns(3)
-    _1,_2,marker_size=correlation_to_metadata_scatter.columns(3)
+    plot_type,_2,marker_size=correlation_to_metadata_scatter.columns(3)
+    plot_type_selction=correlate_to.selectbox("Select Plot Type",options=['Dot','Box'])
     correlate_to_selection=correlate_to.selectbox(label="Correlate to",options=meta_columns,index=loc,key='correleta_to_what_meta_column')#7
     color_by_picker=color.selectbox(label="Color by(for the Heatmap this is the Y Axis Parameter)",options=[None]+meta_columns,index=loc2,key='color_by_what_meta_column')
-    marker_picker=marker.selectbox(label="Marker",options=[None]+meta_columns,index=loc2,key='marker_by_what_meta_column')
-    marker_size=marker.slider(label="Marker Size",min_value=5,max_value=30,value=10,key='marker_size')
+    marker_picker=marker.selectbox(label="Marker",options=[None]+meta_columns,index=0,key='marker_by_what_meta_column')
+    marker_size=marker.slider(label="Marker Size",min_value=5,max_value=30,value=8,key='marker_size')
     try:
         df2_piv[correlate_to_selection]=df2_piv[correlate_to_selection].astype(float)
     except:
@@ -366,14 +367,25 @@ def st_main_correlation_scatter_between_bacteria_and_metadata_parameter():
         color_seq=['#808080','#5A5A5A']
     else:
         color_seq=px.colors.qualitative.Plotly
-    plot=px.scatter(df2_piv.sort_values(by=correlate_to_selection),
-                    x=correlate_to_selection,
-                    y=bacteria_picker,
-                    hover_data=meta_columns,
-                    color=color_by_picker,
-                    symbol=marker_picker,
-                    color_discrete_sequence=color_seq,
-                    symbol_sequence=['circle','square','diamond','cross','x','triangle-up','triangle-down','pentagon','bowtie'])
+    if plot_type_selction=='Dot':
+        plot=px.scatter(df2_piv.sort_values(by=correlate_to_selection),
+                        x=correlate_to_selection,
+                        y=bacteria_picker,
+                        hover_data=meta_columns,
+                        color=color_by_picker,
+                        symbol=marker_picker,
+                        color_discrete_sequence=color_seq,
+                        symbol_sequence=['circle','square','diamond','cross','x','triangle-up','triangle-down','pentagon','bowtie'])
+    elif plot_type_selction=='Box':
+        # color_by_picker.get(val='')
+        plot=px.box(df2_piv.sort_values(by=correlate_to_selection),
+                        x=correlate_to_selection,
+                        y=bacteria_picker,
+                        hover_data=meta_columns,
+                        color=color_by_picker,
+                        # symbol=marker_picker,
+                        color_discrete_sequence=color_seq,)
+                        # symbol_sequence=['circle','square','diamond','cross','x','triangle-up','triangle-down','pentagon','bowtie'])
     plot.update_layout(font=dict(size=font_size,),)
     plot.layout.yaxis.title=plot.layout.yaxis.title['text'].split(';')[-1]
     plot.update_layout(plot_bgcolor='white')
