@@ -397,7 +397,6 @@ def st_main_ra_plot_of_selected_bacteria():
 
     fig1 = px.bar(df2_piv, x="SampleID", y=[x, y], facet_col=split)
     fig1.update_xaxes(matches=None)
-    # fig1.update_yaxes(title="Relative Abundance")
     fig1.update_layout(showlegend=False)
     fig1.update_layout(
         font=dict(
@@ -568,7 +567,6 @@ def st_main_correlation_scatter_between_bacteria_and_metadata_parameter():
     df2_piv[bacteria_picker + "_log10"] = np.log10(
         df2_piv[bacteria_picker + "_no_zero"]
     )
-    # df2_piv[bacteria_picker+"_log2"]=df2_piv[bacteria_picker+"_log"].replace({np.nan: df2_piv[bacteria_picker+"_no_zero"].min()})
     if color_by_picker is None:
         color_seq = ["#808080", "#5A5A5A"]
     else:
@@ -595,7 +593,6 @@ def st_main_correlation_scatter_between_bacteria_and_metadata_parameter():
             ],
         )
     elif plot_type_selction == "Box":
-        # color_by_picker.get(val='')
         plot = px.box(
             df2_piv.sort_values(by=correlate_to_selection),
             x=correlate_to_selection,
@@ -605,7 +602,6 @@ def st_main_correlation_scatter_between_bacteria_and_metadata_parameter():
             # symbol=marker_picker,
             color_discrete_sequence=color_seq,
         )
-        # symbol_sequence=['circle','square','diamond','cross','x','triangle-up','triangle-down','pentagon','bowtie'])
     plot.update_layout(
         font=dict(
             size=font_size,
@@ -616,7 +612,7 @@ def st_main_correlation_scatter_between_bacteria_and_metadata_parameter():
     plot.update_traces(marker_size=marker_size)
     correlation_to_metadata_scatter.plotly_chart(plot, use_container_width=True)
 
-    # fig=px.density_heatmap(df2_piv,x=correlate_to_selection,y=color_by_picker,z=bacteria_picker+'_log2',color_continuous_scale=px.colors.sequential.Blues,histfunc='avg')#text_auto=True)
+
     transformation = correlation_to_metadata_scatter.selectbox(
         "Choose Transformation for Heatmap",
         options=["None", "Log2", "Log10"],
@@ -649,26 +645,20 @@ def st_main_correlation_scatter_between_bacteria_and_metadata_parameter():
         color_continuous_scale=color_seq_heatmap,
         aspect="auto",
         title=bacteria_picker.split(";")[-1],
-    )  # text_auto=True)
+    )
 
     fig1.update_layout(
         plot_bgcolor="white",
         autosize=True,
     )
-    # import seaborn as sns
-    # import matplotlib.pyplot as plt
-    # figg=plt.figure(figsize=(10,10))
-    # sns.heatmap(df2_piv.pivot_table(correlate_to_selection,color_by_picker,bacteria_picker,aggfunc='mean'))
-    # correlation_to_metadata_scatter.plotly_chart(fig,use_container_width=True)
     correlation_to_metadata_scatter.plotly_chart(fig1, use_container_width=True)
-    # correlation_to_metadata_scatter.pyplot(figg,use_container_width=True)
 
 
 def st_main_correlation_scatter_between_ratio_and_metadata_parameter():
     # Scatter plot between one selected bacteria and any column in the metadata
     ratio_correlation_to_metadata_scatter = st.container()
     ratio_correlation_to_metadata_scatter.subheader(
-        f"Correlate the Ratio With Any Metadata Paramterer"
+        f"Correlate the Ratio With Any Metadata Parameter"
     )
     ratio_correlation_to_metadata_scatter.text(
         "Uses the above selected bacteria for the ratios"
@@ -679,7 +669,7 @@ def st_main_correlation_scatter_between_ratio_and_metadata_parameter():
         label="Correlate to ",
         options=meta_columns,
         index=0,
-        key="correleta_ratio_to_what_meta_column",
+        key="correlate_ratio_to_what_meta_column",
     )  # 7
     color_by_picker1 = color1.selectbox(
         label="Color by ",
