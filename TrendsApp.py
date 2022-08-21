@@ -34,7 +34,7 @@ def st_main_header():
     st.sidebar.image("Mybiotics_LOGO - Large.png",width=350)
     st.sidebar.markdown("""---""")
     message_box=st.container()
-    sample_data_message=message_box.error("#### Upload your data using the 'File Upload' widget OR use sample data by clicking 'Sample Data' checkbox.")
+    sample_data_message=message_box.error("#### Upload your data using the 'File Upload' widget OR use sample data by clicking 'Use Sample Data' checkbox.")
     
 
     
@@ -76,7 +76,7 @@ def st_sidebar_upload_file():
     if upload_data_widget:
         df=pd.read_csv(BytesIO(upload_data_widget.getvalue()),engine='python')
         sample_data_message.success("Custom Data Loaded")
-    sample_data=upload_column.checkbox("Sample Data")
+    sample_data=upload_column.checkbox("Use Sample Data")
     if sample_data:
         df=pd.read_csv('sample_data.csv')
     upload_column.markdown("""---""")
@@ -92,7 +92,7 @@ def st_main_raw_data():
     show_raw=raw_data.checkbox("Show Raw Data", value=False)
     if show_raw:
         raw_data.write(df.astype(str),use_container_width=True)
-    raw_data.markdown("""---""")
+    # raw_data.markdown("""---""")
     # data=st.container()
 def st_sidebar_sort_samples():
     global meta_columns,sorter,data
@@ -100,8 +100,8 @@ def st_sidebar_sort_samples():
     df[meta_columns]=df[meta_columns].astype(str)
     sorter_mean=df.groupby("OTU").agg({'RA':'mean'}).sort_values("RA",ascending=False).index.tolist()
     sorter_median=df.groupby("OTU").agg({'RA':'mean'}).sort_values("RA",ascending=False).index.tolist()
-    sorter_choose=st.sidebar.radio("Sort samples by Mean or Median",options=["Mean","Median"],index=0,key='mean_or_median')#,horizontal=True)
-    st.sidebar.markdown("""---""")
+    sorter_choose=st.radio("Sort samples by Mean or Median",options=["Mean","Median"],index=0,key='mean_or_median')#,horizontal=True)
+    st.markdown("""---""")
     if sorter_choose=="Mean":
         sorter=sorter_mean
     elif sorter_choose=="Median":
@@ -219,10 +219,10 @@ def st_main_top_correlations_plot():
     df_top_corr_new['x']=df_top_corr_new['OTU1'].astype(str)+df_top_corr_new['OTU'].astype(str)
     df_top_corr_new['abs']=abs(df_top_corr_new['value'])
     df_top_corr_new["Correlation"] = np.where(df_top_corr_new["value"]<0, 'Negative', 'Positive')
-    top_corr=st.sidebar.slider(label='Number of top correlations to show',min_value=1,max_value=len(df_filtered['OTU'].unique()),value=50)
-    top_correlation_plot.subheader(f"{top_corr} Top Correlations")
+    top_correlation_plot.subheader(f"Top Correlations")
     top_correlation_plot.text("Hover over the plot to see OTU names")
     top_correlation_plot.text("Change number of correlations shown by using the slider in the sidebar")
+    top_corr=top_correlation_plot.slider(label='Number of top correlations to show',min_value=1,max_value=len(df_filtered['OTU'].unique()),value=50)
     df_top_corr_new=df_top_corr_new.sort_values('abs',ascending=False).head(top_corr).sort_values('value',ascending=False)
     text_on_plot=top_correlation_plot.checkbox("Show text on plot", value=False)
     top_corr_plot=px.bar(df_top_corr_new,x='x',y='value',hover_data=['OTU','OTU1'],color='Correlation',text_auto=text_on_plot)
@@ -348,32 +348,60 @@ def st_main_correlation_scatter_between_bacteria_and_metadata_parameter():
     else:
         loc2=2
     bacteria_picker=correlation_to_metadata_scatter.selectbox(label="Pick Bacteria",options=sorter[:],index=0,key='bac_to_correlate_to_meta')
-    correlate_to,color=correlation_to_metadata_scatter.columns(2)
+    correlate_to,color,marker=correlation_to_metadata_scatter.columns(3)
+    _1,_2,marker_size=correlation_to_metadata_scatter.columns(3)
     correlate_to_selection=correlate_to.selectbox(label="Correlate to",options=meta_columns,index=loc,key='correleta_to_what_meta_column')#7
     color_by_picker=color.selectbox(label="Color by(for the Heatmap this is the Y Axis Parameter)",options=[None]+meta_columns,index=loc2,key='color_by_what_meta_column')
+    marker_picker=marker.selectbox(label="Marker",options=[None]+meta_columns,index=loc2,key='marker_by_what_meta_column')
+    marker_size=marker.slider(label="Marker Size",min_value=5,max_value=30,value=10,key='marker_size')
     try:
         df2_piv[correlate_to_selection]=df2_piv[correlate_to_selection].astype(float)
     except:
         pass
     df2_piv[bacteria_picker+"_no_zero"]=df2_piv[bacteria_picker].replace(0,np.nan)
-    df2_piv[bacteria_picker+"_log"]=np.log2(df2_piv[bacteria_picker+"_no_zero"])
-    df2_piv[bacteria_picker+"_log2"]=df2_piv[bacteria_picker+"_log"].replace({np.nan: df2_piv[bacteria_picker+"_no_zero"].min()})
-    plot=px.scatter(df2_piv.sort_values(by=correlate_to_selection),x=correlate_to_selection,y=bacteria_picker,hover_data=meta_columns,color=color_by_picker)
-    plot.update_layout(font=dict(size=font_size,))
+    df2_piv[bacteria_picker+"_log2"]=np.log2(df2_piv[bacteria_picker+"_no_zero"])
+    df2_piv[bacteria_picker+"_log10"]=np.log10(df2_piv[bacteria_picker+"_no_zero"])
+    # df2_piv[bacteria_picker+"_log2"]=df2_piv[bacteria_picker+"_log"].replace({np.nan: df2_piv[bacteria_picker+"_no_zero"].min()})
+    if color_by_picker is None:
+        color_seq=['#808080','#5A5A5A']
+    else:
+        color_seq=px.colors.qualitative.Plotly
+    plot=px.scatter(df2_piv.sort_values(by=correlate_to_selection),
+                    x=correlate_to_selection,
+                    y=bacteria_picker,
+                    hover_data=meta_columns,
+                    color=color_by_picker,
+                    symbol=marker_picker,
+                    color_discrete_sequence=color_seq,
+                    symbol_sequence=['circle','square','diamond','cross','x','triangle-up','triangle-down','pentagon','bowtie'])
+    plot.update_layout(font=dict(size=font_size,),)
     plot.layout.yaxis.title=plot.layout.yaxis.title['text'].split(';')[-1]
+    plot.update_layout(plot_bgcolor='white')
+    plot.update_traces(marker_size=marker_size)
     correlation_to_metadata_scatter.plotly_chart(plot,use_container_width=True)
     
     
     
     # fig=px.density_heatmap(df2_piv,x=correlate_to_selection,y=color_by_picker,z=bacteria_picker+'_log2',color_continuous_scale=px.colors.sequential.Blues,histfunc='avg')#text_auto=True)
-    
+    transformation=correlation_to_metadata_scatter.selectbox('Choose Transformation for Heatmap',options=['None','Log2','Log10'],key='heatmap_trasformation')
+    grayscale=correlation_to_metadata_scatter.checkbox('Greyscale',value=False,key='grayscale_heatmap')
+    if grayscale:
+        color_seq_heatmap=px.colors.sequential.gray
+    else:
+        color_seq_heatmap=px.colors.sequential.Blues
+    if transformation=='None':
+        val=bacteria_picker
+    elif transformation=='Log2':
+        val=bacteria_picker+"_log2"
+    elif transformation=='Log10':
+        val=bacteria_picker+"_log10"
     # fig.layout.coloraxis.colorbar.title = "log2RA"
-    df_heatmap=df2_piv.pivot_table(columns=correlate_to_selection,index=color_by_picker,values=bacteria_picker+"_log2",aggfunc='mean')
+    df_heatmap=df2_piv.pivot_table(columns=correlate_to_selection,index=color_by_picker,values=val,aggfunc='mean')
     df_heatmap.columns=df_heatmap.columns.astype(str)
     df_heatmap.index=df_heatmap.index.astype(str)
-    fig1=px.imshow(df_heatmap,color_continuous_scale=px.colors.sequential.Blues,aspect ='auto',title=bacteria_picker.split(';')[-1])#text_auto=True)
+    fig1=px.imshow(df_heatmap,color_continuous_scale=color_seq_heatmap,aspect ='auto',title=bacteria_picker.split(';')[-1])#text_auto=True)
     
-    fig1.update_layout(plot_bgcolor='#EEEEEE',autosize=True,)
+    fig1.update_layout(plot_bgcolor='white',autosize=True,)
     # import seaborn as sns
     # import matplotlib.pyplot as plt
     # figg=plt.figure(figsize=(10,10))
@@ -389,7 +417,7 @@ def st_main_correlation_scatter_between_bacteria_and_metadata_parameter():
 def st_main_correlation_scatter_between_ratio_and_metadata_parameter():
     # Scatter plot between one selected bacteria and any column in the metadata 
     ratio_correlation_to_metadata_scatter=st.container()
-    ratio_correlation_to_metadata_scatter.subheader(f"Correlate ratio between selected bacteria with any metadata column")
+    ratio_correlation_to_metadata_scatter.subheader(f"Correlate the Ratio With Any Metadata Paramterer")
     ratio_correlation_to_metadata_scatter.text("Uses the above selected bacteria for the ratios")
     # bacteria_picker=ratio_correlation_to_metadata_scatter.selectbox(label="Pick Bacteria",options=sorter[:],index=0)
     correlate_to1,color1=ratio_correlation_to_metadata_scatter.columns(2)
@@ -455,8 +483,14 @@ def main():
     if upload_data_widget or sample_data:
         with st.spinner('Wait for it...'):
             st_main_raw_data()
-            options_1=["Top 10 Bacteria","RA of All Samples","Correlation Matrix of the top bacteria","Top Correlations"]
-            options_2=["Relative Abundance of both bacteria","Correlations Between Bacteria","Ratios between Bacteria",'Correlate ratio between selected bacteria with any metadata column','Correlate any bacteria with any metadata column']
+            options_1=["Most Abundant Bacteria","RA of All Samples",
+                       "Correlation Matrix of the top bacteria",
+                       "Top Correlations"]
+            options_2=["Relative Abundance of Two Selected Bacteria",
+                       "Correlations Between Two Selected Bacteria",
+                       "Ratios Between Two Selected Bacteria",
+                       'Correlate the Ratio With Any Metadata Paramterer',
+                       'Correlate Any Bacteria With Any Metadata Column']
             
             save_and_upload_settings()
             st_sidebar_sort_samples()
@@ -468,7 +502,7 @@ def main():
             
             plot_to_show=st.radio("Choose Which Plot To Show",options=options_1+options_2,key='which_plot')
             if plot_to_show in options_1:
-                if plot_to_show=="Top 10 Bacteria":
+                if plot_to_show=="Most Abundant Bacteria":
                     st_main_top_bacteria_plot()    
                 elif plot_to_show=="RA of All Samples":
                     show_ra_of_all()
@@ -478,16 +512,18 @@ def main():
                     st_main_top_correlations_plot()
             elif plot_to_show in options_2:
                 st_main_bacteria_to_compare_selection()
-                if plot_to_show=="Relative Abundance of both bacteria":
+                if plot_to_show=="Relative Abundance of Two Selected Bacteria":
                     st_main_ra_plot_of_selected_bacteria()
-                elif plot_to_show=="Correlations Between Bacteria":
+                elif plot_to_show=="Correlations Between Two Selected Bacteria":
                     st_main_correlation_scatter_between_selected_baceria()
-                elif plot_to_show=="Ratios between Bacteria":
+                elif plot_to_show=="Ratios Between Two Selected Bacteria":
                     st_main_ratio_between_selected_bacteria_boxplot()
-                elif plot_to_show=="Correlate ratio between selected bacteria with any metadata column":
+                elif plot_to_show=="Correlate the Ratio With Any Metadata Paramterer":
                     st_main_correlation_scatter_between_ratio_and_metadata_parameter()
-                elif plot_to_show=="Correlate any bacteria with any metadata column":
+                elif plot_to_show=="Correlate Any Bacteria With Any Metadata Column":
                     st_main_correlation_scatter_between_bacteria_and_metadata_parameter()
+            # elif plot_to_show in options_3:
+                
                 
             
         
