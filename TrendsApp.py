@@ -225,7 +225,7 @@ def st_sidebar_top_bacteria_slider():
 
 def st_main_top_bacteria_plot():
     # A box plot showing the relative abundance of the top bacteria
-    top_bacteria_boxplot = container()
+    top_bacteria_boxplot = st.container()
     top_bacteria_boxplot.subheader(f"Top {top_val} bacteria (ordered by mean)")
     top_bacteria_boxplot.text(
         "Change number of top bacteria by using the slider in the sidebar"
@@ -534,15 +534,16 @@ def st_main_correlation_scatter_between_bacteria_and_metadata_parameter():
     )
     correlate_to, color, marker = correlation_to_metadata_scatter.columns(3)
     plot_type, _2, marker_size = correlation_to_metadata_scatter.columns(3)
-    plot_type_selction = correlate_to.selectbox(
-        "Select Plot Type", options=["Dot", "Box"]
-    )
+    
     correlate_to_selection = correlate_to.selectbox(
         label="Correlate to",
         options=meta_columns,
         index=loc,
         key="correleta_to_what_meta_column",
     )  # 7
+    plot_type_selction = correlate_to.selectbox(
+        "Select Plot Type", options=["Dot", "Box"]
+    )
     color_by_picker = color.selectbox(
         label="Color by(for the Heatmap this is the Y Axis Parameter)",
         options=[None] + meta_columns,
@@ -622,7 +623,7 @@ def st_main_correlation_scatter_between_bacteria_and_metadata_parameter():
         "Greyscale", value=False, key="grayscale_heatmap"
     )
     if grayscale:
-        color_seq_heatmap = px.colors.sequential.gray
+        color_seq_heatmap = px.colors.sequential.gray_r
     else:
         color_seq_heatmap = px.colors.sequential.Blues
     if transformation == "None":
@@ -646,11 +647,15 @@ def st_main_correlation_scatter_between_bacteria_and_metadata_parameter():
         aspect="auto",
         title=bacteria_picker.split(";")[-1],
     )
-
+    fig1.layout.coloraxis.colorbar.tickformat='.2E'
     fig1.update_layout(
         plot_bgcolor="white",
         autosize=True,
+        font=dict(
+            size=font_size,
+        )
     )
+    
     correlation_to_metadata_scatter.plotly_chart(fig1, use_container_width=True)
 
 
@@ -743,14 +748,15 @@ def save_and_upload_settings():
     )
 
     if upload_settings_widget:
-        uploaded_settings = loads(upload_settings_widget.getvalue())
-        failed = []
-        succeeded = []
-        button_apply_uploaded_settings = save_and_use_settings.button(
-            "Apply Settings",
-            on_click=apply_uploaded_settings,
-            args=(uploaded_settings,),
-        )
+        with upload_settings_widget.getvalue() as f:
+            uploaded_settings = loads(f)
+            failed = []
+            succeeded = []
+            button_apply_uploaded_settings = save_and_use_settings.button(
+                "Apply Settings",
+                on_click=apply_uploaded_settings,
+                args=(uploaded_settings,),
+            )
 
 
 def apply_uploaded_settings(json_settings):
@@ -829,5 +835,5 @@ def main():
 
 # %%
 if __name__ == "__main__":
-    if check_password():
+    # if check_password():
         main()
