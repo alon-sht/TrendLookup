@@ -525,6 +525,8 @@ def st_main_ratio_between_selected_bacteria_boxplot():
         group2=[]
         mean_group1=[]
         mean_group2=[]
+        median_group1=[]
+        median_group2=[]
         stat_list=[]
         p_list=[]
         statistic=ratio_between_selected_bacteria.selectbox('Choose Statistic Test',options=["Mann Whitney U",'Kruskal Wallis'])
@@ -533,6 +535,8 @@ def st_main_ratio_between_selected_bacteria_boxplot():
             group2.append(perm[1])
             mean_group1.append(np.mean(values_dict[perm[0]]))
             mean_group2.append(np.mean(values_dict[perm[1]]))
+            median_group1.append(np.median(values_dict[perm[0]]))
+            median_group2.append(np.median(values_dict[perm[1]]))
             if statistic=='Mann Whitney U':
                 stat,p=mannwhitneyu(values_dict[perm[0]],values_dict[perm[1]])
             elif statistic=='Wilcoxon':
@@ -543,8 +547,9 @@ def st_main_ratio_between_selected_bacteria_boxplot():
             stat_list.append(stat)
             p_list.append(p)
             
-        stat_df=pd.DataFrame.from_dict({'Group1':group1,'Group2':group2,'Mean_Group1':mean_group1,'Mean_Group2':mean_group2,'Stat':stat_list,'P-Value':p_list})            
+        stat_df=pd.DataFrame.from_dict({'Group1':group1,'Group2':group2,'Mean_Group1':mean_group1,'Mean_Group2':mean_group2,'Median_Group1':median_group1,'Median_Group2':median_group2,'Stat':stat_list,'P-Value':p_list})            
         stat_df['Significant']=stat_df['P-Value']<=0.05
+        # stat_df['Which is heigher']=str(split_by)+": "
         ratio_between_selected_bacteria.markdown("Groups are selected by 'Group By' dropdown above the plot")
         ratio_between_selected_bacteria.write(stat_df,use_container_width=True)
             
