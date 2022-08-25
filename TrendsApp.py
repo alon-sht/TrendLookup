@@ -3,11 +3,12 @@ import os
 import pandas as pd
 import plotly.express as px
 import numpy as np
-from scipy.stats import spearmanr
+from scipy.stats import spearmanr, mannwhitneyu,kruskal,wilcoxon
 import streamlit as st
 from PIL import Image
 from src.check_password import check_password
 from io import BytesIO
+from itertools import combinations,combinations
 
 st.set_page_config(
     layout="wide", page_title="TrendAnalysis", page_icon=Image.open("fav.ico")
@@ -359,7 +360,12 @@ def st_main_bacteria_to_compare_selection():
     global df2_piv
     df2_piv = df1.reset_index()
     df2_piv["ratio"] = df2_piv[x] / df2_piv[y]
-
+    df2_piv["ratio"]=df2_piv["ratio"].replace(np.inf, np.nan)
+    
+    
+    
+    
+    
 
 def print_corr(df, x, y, param, where):
     # Function to print correlations
@@ -493,8 +499,9 @@ def st_main_ratio_between_selected_bacteria_boxplot():
     )
     if box_or_strip == "Box Plot":
         fig3 = px.box(
-            df2_piv, x=split_by, y="ratio", hover_data=meta_columns, color=color_by2
+            df2_piv, x=split_by, y="ratio", hover_data=meta_columns, color=color_by2,
         )
+        fig3.update_traces(boxmean=True)
     elif box_or_strip == "Strip Plot":
         fig3 = px.strip(
             df2_piv, x=split_by, y="ratio", hover_data=meta_columns, color=color_by2
@@ -507,8 +514,44 @@ def st_main_ratio_between_selected_bacteria_boxplot():
             size=font_size,
         )
     )
-
     ratio_between_selected_bacteria.plotly_chart(fig3, use_container_width=True)
+    if split_by:
+
+        values_dict={split_category:df2_piv[df2_piv[split_by]==split_category]['ratio'].dropna().tolist() for split_category in df2_piv[split_by].unique()}
+        
+        perms=list(combinations(values_dict.keys(),2))
+
+        group1=[]
+        group2=[]
+        mean_group1=[]
+        mean_group2=[]
+        stat_list=[]
+        p_list=[]
+        statistic=ratio_between_selected_bacteria.selectbox('Choose Statistic Test',options=["Mann Whitney U",'Kruskal Wallis'])
+        for perm in perms:
+            group1.append(perm[0])
+            group2.append(perm[1])
+            mean_group1.append(np.mean(values_dict[perm[0]]))
+            mean_group2.append(np.mean(values_dict[perm[1]]))
+            if statistic=='Mann Whitney U':
+                stat,p=mannwhitneyu(values_dict[perm[0]],values_dict[perm[1]])
+            elif statistic=='Wilcoxon':
+                stat,p=wilcoxon(values_dict[perm[0]],values_dict[perm[1]])
+            elif statistic=='Kruskal Wallis':
+                stat,p=kruskal(values_dict[perm[0]],values_dict[perm[1]])
+            
+            stat_list.append(stat)
+            p_list.append(p)
+            
+        stat_df=pd.DataFrame.from_dict({'Group1':group1,'Group2':group2,'Mean_Group1':mean_group1,'Mean_Group2':mean_group2,'Stat':stat_list,'P-Value':p_list})            
+        stat_df['Significant']=stat_df['P-Value']<=0.05
+        ratio_between_selected_bacteria.markdown("Groups are selected by 'Group By' dropdown above the plot")
+        ratio_between_selected_bacteria.write(stat_df,use_container_width=True)
+            
+        
+        
+        
+    
     ratio_between_selected_bacteria.markdown("""---""")
 
 
