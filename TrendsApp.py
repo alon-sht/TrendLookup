@@ -625,6 +625,7 @@ def st_main_correlation_scatter_between_bacteria_and_metadata_parameter():
     boolean = correlation_to_metadata_scatter.checkbox(
         "Yes/No Heatmap", value=False, key="boolean_heatmap"
     )
+    agg_func='mean'
     if grayscale:
         color_seq_heatmap = px.colors.sequential.gray_r
     else:
@@ -635,16 +636,20 @@ def st_main_correlation_scatter_between_bacteria_and_metadata_parameter():
         val = bacteria_picker + "_log2"
     elif transformation == "Log10":
         val = bacteria_picker + "_log10"
-    if boolean:   
-        df2_piv[val]=df2_piv[val].astype(bool)
+    
     # fig.layout.coloraxis.colorbar.title = "log2RA"
+    
     df_heatmap = df2_piv.pivot_table(
         columns=correlate_to_selection,
         index=color_by_picker,
         values=val,
-        aggfunc="mean",
+        aggfunc=agg_func,
     )
-    
+    if boolean:   
+        # df2_piv[val]=df2_piv[val].astype(bool)
+        # agg_func=np.any
+        df_heatmap=df_heatmap.replace(np.nan,0).astype(bool).astype(int)
+        # st.write(df_heatmap.astype(str))
         
     df_heatmap.columns = df_heatmap.columns.astype(str)
     df_heatmap.index = df_heatmap.index.astype(str)
