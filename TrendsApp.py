@@ -17,13 +17,7 @@ hide_streamlit_style = """
               <style>
               #MainMenu {visibility: hidden;}
               footer {visibility: hidden;}
-              [data-testid="stSidebar"][aria-expanded="true"] > div:first-child {
-                     width: 500px;
-                     }
-              [data-testid="stSidebar"][aria-expanded="false"] > div:first-child {
-                     width: 500px;
-                     margin-left: -500px;
-                     }
+
             </style>
             """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True)
@@ -409,6 +403,7 @@ def st_main_ra_plot_of_selected_bacteria():
             size=font_size,
         )
     )
+    fig1.for_each_annotation(lambda a: a.update(text=a.text.replace(str(split)+"=", "")))
     ra_of_selected_bacteria.plotly_chart(fig1, use_container_width=True)
     ra_of_selected_bacteria.markdown("""---""")
 
