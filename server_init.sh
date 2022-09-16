@@ -1,0 +1,1 @@
+screen -dmS Trends streamlit run TrendsApp.py --server.port 5403 
