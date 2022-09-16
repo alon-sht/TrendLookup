@@ -1,7 +1,6 @@
 # %%
 import streamlit as st
-import pandas as pd 
-
+import pandas as pd
 
 
 #%%
@@ -68,8 +67,8 @@ def reset_filter_widgets_to_default(df, columns):
     for y in df[columns]:
         if str(y) in st.session_state:
             del st.session_state[y]
-            
-     
+
+
 def get_session_state_dict():
     session_state_dict = {
         k: v
@@ -78,7 +77,7 @@ def get_session_state_dict():
     }
     return session_state_dict
 
-       
+
 def update_session_state(
     update_all: bool = False, manual_session_state_dict: dict = None
 ):
@@ -96,7 +95,8 @@ def update_session_state(
             succeeded.append(k)
         except:
             failed.append(k)
-            
+
+
 def reset_state_to_default(custom_exceptions=None):
     default_exceptions = ["logged_in"]
     if type(custom_exceptions) == list:

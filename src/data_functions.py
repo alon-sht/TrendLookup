@@ -1,7 +1,9 @@
 # %%
 import pandas as pd
 import streamlit as st
+
 # %%
+
 
 def sort_samples(df):
     sorter_mean = (
@@ -29,5 +31,5 @@ def sort_samples(df):
     # sorterIndex = dict(zip(sorter, range(len(sorter))))
     # df["ind"] = df["OTU"].map(sorterIndex)
     # df.sort_values(by="ind", inplace=True)
-    return sorter_mean,sorter_median
+    return sorter_mean, sorter_median
     # return df,sorter

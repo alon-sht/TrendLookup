@@ -3,8 +3,8 @@ import streamlit as st
 import plotly.express as px
 import numpy as np
 import pandas as pd
-from scipy.stats import spearmanr, mannwhitneyu,kruskal,wilcoxon
-from itertools import combinations,combinations
+from scipy.stats import spearmanr, mannwhitneyu, kruskal, wilcoxon
+from itertools import combinations, combinations
 from src.functions import update_session_state
 
 from src.data_functions import sort_samples
@@ -13,19 +13,25 @@ update_session_state(update_all=True)
 
 # %%
 # st.write(st.session_state
-# 
+#
 def general_plot_settings():
-    plot_settings=st.sidebar.expander("Plot Settings")
-    
+    plot_settings = st.sidebar.expander("Plot Settings")
+
     font_size = plot_settings.slider(
         label="Font Size", min_value=1, max_value=30, value=12, key="font_size"
     )
-    sorter=plot_settings.radio("Sort by",options=['Mean','Median'],key='sorter_radio',horizontal=True)
-    st.session_state['sorter']=st.session_state['sorter_mean'] if sorter=="Mean" else st.session_state['sorter_median']
-    
-def show_df():
-    st.write(st.session_state['filtered_df'].astype(str))
+    sorter = plot_settings.radio(
+        "Sort by", options=["Mean", "Median"], key="sorter_radio", horizontal=True
+    )
+    st.session_state["sorter"] = (
+        st.session_state["sorter_mean"]
+        if sorter == "Mean"
+        else st.session_state["sorter_median"]
+    )
 
+
+def show_df():
+    st.write(st.session_state["filtered_df"].astype(str))
 
 
 def show_ra_of_all():
@@ -41,15 +47,13 @@ def show_ra_of_all():
         ra_all_legend = ra_all_plot.checkbox("Show Legend on Plot", value=False)
         with st.spinner("Loading plot"):
             fig = px.bar(
-                st.session_state['filtered_df'],
+                st.session_state["filtered_df"],
                 x="SampleID",
                 y="RA",
                 color="OTU",
                 barmode="stack",
             )
-            fig.update_xaxes(
-                dtick=1,
-            )
+            fig.update_xaxes(dtick=1,)
             # fig.show(renderer="svg")
             fig.update_layout(showlegend=ra_all_legend)
             ra_all_plot.plotly_chart(fig, use_container_width=True)
@@ -59,44 +63,38 @@ def show_ra_of_all():
 
 def top_bacteria_plot():
     # A box plot showing the relative abundance of the top bacteria
-    
-    
+
     top_bacteria_boxplot = st.container()
-    
+
     top_bacteria_boxplot.subheader(f"Most abundant bacteria")
     top_val = top_bacteria_boxplot.slider(
         label="Select number of bacteria to show",
         min_value=1,
-        max_value=len(st.session_state['filtered_df']["OTU"].unique()),
+        max_value=len(st.session_state["filtered_df"]["OTU"].unique()),
         value=10,
         key="top_val",
     )
-    df_top = st.session_state['filtered_df'][st.session_state['filtered_df']["OTU"].isin(st.session_state['sorter'][:top_val])]
+    df_top = st.session_state["filtered_df"][
+        st.session_state["filtered_df"]["OTU"].isin(
+            st.session_state["sorter"][:top_val]
+        )
+    ]
     with st.spinner("Loading"):
         fig_all = px.box(
-            df_top,
-            y="OTU",
-            x="RA",
-            height=900,
+            df_top, y="OTU", x="RA", height=900,
         )  # template='plotly_white')
-        fig_all.update_layout(
-            font=dict(
-                size=st.session_state['font_size'],
-            )
-        )
+        fig_all.update_layout(font=dict(size=st.session_state["font_size"],))
         fig_all.update_traces(
-            boxmean=True,
-            orientation="h",
+            boxmean=True, orientation="h",
         )
         fig_all.update_yaxes(
-            autorange="reversed",
-            dtick=1,
+            autorange="reversed", dtick=1,
         )
         fig_all.update_xaxes(title="Relative Abundance")
         top_bacteria_boxplot.plotly_chart(fig_all, use_container_width=True)
     top_bacteria_boxplot.markdown("""---""")
-    
-    
+
+
 def correlation_heatmap_between_top_bac():
     # Show heatmap of top correlations
     top_bac_correlation_heatmap = st.container()
@@ -104,21 +102,26 @@ def correlation_heatmap_between_top_bac():
     top_val = top_bac_correlation_heatmap.slider(
         label="Select number of bacteria to correlate (sorted by mean)",
         min_value=1,
-        max_value=len(st.session_state['filtered_df']["OTU"].unique()),
+        max_value=len(st.session_state["filtered_df"]["OTU"].unique()),
         value=10,
         key="top_val1",
     )
-    
-    df_top = st.session_state['filtered_df'][st.session_state['filtered_df']["OTU"].isin(st.session_state['sorter'][:top_val])]
-    df_top_corr = df_top.pivot(index=st.session_state['meta_columns'], columns=["OTU"], values="RA").corr(
-        method="spearman"
-    )
-    df_top_corr = df_top_corr.mask(np.tril(np.ones(df_top_corr.shape), -1).astype(bool))
-    
 
-    selection_corr=top_bac_correlation_heatmap.radio("Select Plot",options=['Correlation heatmap','Top Correlations'])
-    
-    if selection_corr=='Correlation heatmap':
+    df_top = st.session_state["filtered_df"][
+        st.session_state["filtered_df"]["OTU"].isin(
+            st.session_state["sorter"][:top_val]
+        )
+    ]
+    df_top_corr = df_top.pivot(
+        index=st.session_state["meta_columns"], columns=["OTU"], values="RA"
+    ).corr(method="spearman")
+    df_top_corr = df_top_corr.mask(np.tril(np.ones(df_top_corr.shape), -1).astype(bool))
+
+    selection_corr = top_bac_correlation_heatmap.radio(
+        "Select Plot", options=["Correlation heatmap", "Top Correlations"]
+    )
+
+    if selection_corr == "Correlation heatmap":
         top_bac_correlation_heatmap.subheader(
             f"Correlation Matrix of the most abundant bacteria"
         )
@@ -136,14 +139,12 @@ def correlation_heatmap_between_top_bac():
             corr_plot.update_layout(autosize=True, height=900)
             corr_plot.update_xaxes(showticklabels=False, showgrid=False)
             corr_plot.update_yaxes(showticklabels=False, showgrid=False)
-            corr_plot.update_layout(
-                font=dict(
-                    size=st.session_state['font_size'],
-                )
-            )
+            corr_plot.update_layout(font=dict(size=st.session_state["font_size"],))
 
-            top_bac_correlation_heatmap.plotly_chart(corr_plot, use_container_width=True)
-    elif selection_corr=='Top Correlations':
+            top_bac_correlation_heatmap.plotly_chart(
+                corr_plot, use_container_width=True
+            )
+    elif selection_corr == "Top Correlations":
         st_main_top_correlations_plot(df_top_corr)
     # top_bac_correlation_heatmap.markdown("""---""")
 
@@ -151,7 +152,7 @@ def correlation_heatmap_between_top_bac():
 def st_main_top_correlations_plot(df_top_corr):
     # Show bar chart of main correlations
     top_correlation_plot_container = st.container()
-    
+
     df_top_corr.index.name = "OTU1"
     df_top_corr_new = (
         df_top_corr.reset_index()
@@ -176,16 +177,18 @@ def st_main_top_correlations_plot(df_top_corr):
     top_corr = top_correlation_plot_container.slider(
         label="Number of top correlations to show",
         min_value=1,
-        max_value=len(st.session_state['filtered_df']["OTU"].unique()),
+        max_value=len(st.session_state["filtered_df"]["OTU"].unique()),
         value=5,
-        key='number_of_top_corr'
+        key="number_of_top_corr",
     )
     df_top_corr_new = (
         df_top_corr_new.sort_values("abs", ascending=False)
         .head(top_corr)
         .sort_values("value", ascending=False)
     )
-    text_on_plot = top_correlation_plot_container.checkbox("Show text on plot", value=False)
+    text_on_plot = top_correlation_plot_container.checkbox(
+        "Show text on plot", value=False
+    )
     top_corr_plot = px.bar(
         df_top_corr_new,
         x="x",
@@ -196,23 +199,16 @@ def st_main_top_correlations_plot(df_top_corr):
         # orientation='h'
     )
     top_corr_plot.update_traces(
-        textfont_size=12,
-        textangle=0,
-        textposition="outside",
+        textfont_size=12, textangle=0, textposition="outside",
     )  # cliponaxis=False)
     top_corr_plot.update_xaxes(showticklabels=False, title="OTU Pair")
     top_corr_plot.update_yaxes(title="Correlation")
-    top_corr_plot.update_layout(
-        font=dict(
-            size=st.session_state['font_size']
-        )
-    )
+    top_corr_plot.update_layout(font=dict(size=st.session_state["font_size"]))
     top_correlation_plot_container.plotly_chart(top_corr_plot, use_container_width=True)
     top_correlation_plot_container.markdown("""---""")
-    
-    
 
-def ra_plot_of_selected_bacteria(df,x,y):
+
+def ra_plot_of_selected_bacteria(df, x, y):
     # stacked bar chart of RA of the two selected bacteria
 
     ra_of_selected_bacteria = st.container()
@@ -220,21 +216,21 @@ def ra_plot_of_selected_bacteria(df,x,y):
     ra_of_selected_bacteria.subheader(
         f"Relative abundance of {x.split(';')[-1]} and {y.split(';')[-1]}"
     )
-    split=ra_of_selected_bacteria.selectbox("Split By",options=[None]+st.session_state['meta_columns'])
-    
+    split = ra_of_selected_bacteria.selectbox(
+        "Split By", options=[None] + st.session_state["meta_columns"]
+    )
+
     fig1 = px.bar(df, x="SampleID", y=[x, y], facet_col=split)
     fig1.update_xaxes(matches=None)
     fig1.update_layout(showlegend=False)
-    fig1.update_layout(
-        font=dict(
-            size=st.session_state['font_size'],
-        )
+    fig1.update_layout(font=dict(size=st.session_state["font_size"],))
+    fig1.for_each_annotation(
+        lambda a: a.update(text=a.text.replace(str(split) + "=", ""))
     )
-    fig1.for_each_annotation(lambda a: a.update(text=a.text.replace(str(split)+"=", "")))
     ra_of_selected_bacteria.plotly_chart(fig1, use_container_width=True)
     ra_of_selected_bacteria.markdown("""---""")
-    
-    
+
+
 def print_corr(df, x, y, param, where):
     # Function to print correlations
     corr = spearmanr(df[[x, y]])
@@ -251,7 +247,8 @@ def print_corr(df, x, y, param, where):
             f"{param} Correlation: Spearman R: {corr[0]}, P-Value: {corr[1]}"
         )
 
-def correlation_scatter_between_selected_baceria(df,x,y):
+
+def correlation_scatter_between_selected_baceria(df, x, y):
     # Scatter plot of RA of the two selected bacteria
     correlation_between_selected_bacteria = st.container()
     correlation_between_selected_bacteria.subheader(
@@ -262,7 +259,7 @@ def correlation_scatter_between_selected_baceria(df,x,y):
     )
     color = correlation_between_selected_bacteria.selectbox(
         label="Color By",
-        options=[None] + st.session_state['meta_columns'],
+        options=[None] + st.session_state["meta_columns"],
         index=2,
         key="color_by_corr_bacteria_plot",
     )
@@ -276,17 +273,13 @@ def correlation_scatter_between_selected_baceria(df,x,y):
         x=x,
         y=y,
         color=color,
-        hover_data=st.session_state['meta_columns'],
+        hover_data=st.session_state["meta_columns"],
         trendline="ols",
         trendline_scope="overall",
     )
     fig2_trend.layout.xaxis.title = fig2_trend.layout.xaxis.title["text"].split(";")[-1]
     fig2_trend.layout.yaxis.title = fig2_trend.layout.yaxis.title["text"].split(";")[-1]
-    fig2_trend.update_layout(
-        font=dict(
-            size=st.session_state['font_size'],
-        )
-    )
+    fig2_trend.update_layout(font=dict(size=st.session_state["font_size"],))
     col1.plotly_chart(fig2_trend, use_container_width=True)
     print_corr(df, x, y, "Overall", corr_expander)
     fig2_trend_each = px.scatter(
@@ -294,7 +287,7 @@ def correlation_scatter_between_selected_baceria(df,x,y):
         x=x,
         y=y,
         color=color,
-        hover_data=st.session_state['meta_columns'],
+        hover_data=st.session_state["meta_columns"],
         trendline="ols",
     )
     fig2_trend_each.layout.xaxis.title = fig2_trend_each.layout.xaxis.title[
@@ -303,11 +296,7 @@ def correlation_scatter_between_selected_baceria(df,x,y):
     fig2_trend_each.layout.yaxis.title = fig2_trend_each.layout.yaxis.title[
         "text"
     ].split(";")[-1]
-    fig2_trend_each.update_layout(
-        font=dict(
-            size=st.session_state['font_size'],
-        )
-    )
+    fig2_trend_each.update_layout(font=dict(size=st.session_state["font_size"],))
     col2.plotly_chart(fig2_trend_each, use_container_width=True)
 
     for donor in df[color].unique():
@@ -315,35 +304,44 @@ def correlation_scatter_between_selected_baceria(df,x,y):
 
     correlation_between_selected_bacteria.markdown("""---""")
 
+
 def correlate_two_bacteria():
-    
+
     compare_bac_selection = st.container()
     compare_bac_selection.subheader("Select Bacteria to Compare")
     compare_bac_selection.text("Dropdowns are sorted by mean relative abundance")
     with compare_bac_selection.form("Select Bacteria to Compare"):
         x = st.selectbox(
-            label="Bacteria 1", options=st.session_state['sorter'][:], key="bac1"
+            label="Bacteria 1", options=st.session_state["sorter"][:], key="bac1"
         )
         y = st.selectbox(
-            label="Bacteria 2", options=st.session_state['sorter'][:], index=1, key="bac2"
+            label="Bacteria 2",
+            options=st.session_state["sorter"][:],
+            index=1,
+            key="bac2",
         )
         st.form_submit_button("Apply")
     compare_bac_selection.markdown("""---""")
     # global df2_piv
-    df1 = st.session_state['filtered_df'].pivot(index=st.session_state['meta_columns'], columns=["OTU"], values="RA")
+    df1 = st.session_state["filtered_df"].pivot(
+        index=st.session_state["meta_columns"], columns=["OTU"], values="RA"
+    )
     df2_piv = df1.reset_index()
     df2_piv["ratio"] = df2_piv[x] / df2_piv[y]
-    df2_piv["ratio"]=df2_piv["ratio"].replace(np.inf, np.nan)
-    
-    cor_two_radio=st.radio("Choose plot",options=['RA of selected bacteria','Correlation of selected bacteria',])
-    
-    if cor_two_radio=='RA of selected bacteria':
-        ra_plot_of_selected_bacteria(df2_piv,x,y)
-    elif cor_two_radio=='Correlation of selected bacteria':
-        correlation_scatter_between_selected_baceria(df2_piv,x,y)
-        
+    df2_piv["ratio"] = df2_piv["ratio"].replace(np.inf, np.nan)
 
-def ratio_between_selected_bacteria_boxplot(df2_piv,x,y):
+    cor_two_radio = st.radio(
+        "Choose plot",
+        options=["RA of selected bacteria", "Correlation of selected bacteria",],
+    )
+
+    if cor_two_radio == "RA of selected bacteria":
+        ra_plot_of_selected_bacteria(df2_piv, x, y)
+    elif cor_two_radio == "Correlation of selected bacteria":
+        correlation_scatter_between_selected_baceria(df2_piv, x, y)
+
+
+def ratio_between_selected_bacteria_boxplot(df2_piv, x, y):
     # Plot showing ratio between the two selected bacteria
     ratio_between_selected_bacteria = st.container()
     ratio_between_selected_bacteria.subheader(
@@ -351,11 +349,14 @@ def ratio_between_selected_bacteria_boxplot(df2_piv,x,y):
     )
     widget1, widget2 = ratio_between_selected_bacteria.columns(2)
     split_by = widget1.selectbox(
-        label="Group By", options=[None] + st.session_state['meta_columns'], index=0, key="split_by"
+        label="Group By",
+        options=[None] + st.session_state["meta_columns"],
+        index=0,
+        key="split_by",
     )
     color_by2 = widget2.selectbox(
         label="Color By",
-        options=[None] + st.session_state['meta_columns'],
+        options=[None] + st.session_state["meta_columns"],
         index=0,
         key="color_by_ratios_plot",
     )
@@ -364,37 +365,48 @@ def ratio_between_selected_bacteria_boxplot(df2_piv,x,y):
     )
     if box_or_strip == "Box Plot":
         fig3 = px.box(
-            df2_piv, x=split_by, y="ratio", hover_data=st.session_state['meta_columns'], color=color_by2,
+            df2_piv,
+            x=split_by,
+            y="ratio",
+            hover_data=st.session_state["meta_columns"],
+            color=color_by2,
         )
         fig3.update_traces(boxmean=True)
     elif box_or_strip == "Strip Plot":
         fig3 = px.strip(
-            df2_piv, x=split_by, y="ratio", hover_data=st.session_state['meta_columns'], color=color_by2
+            df2_piv,
+            x=split_by,
+            y="ratio",
+            hover_data=st.session_state["meta_columns"],
+            color=color_by2,
         )
     fig3.update_xaxes(matches=None, autorange=True)
     fig3.update_layout(boxmode="group", boxgap=0)
     fig3.layout.yaxis.title = f"{x.split(';')[-1]}:{y.split(';')[-1]} ratio"
-    fig3.update_layout(
-        font=dict(
-            size=st.session_state['font_size']
-        )
-    )
+    fig3.update_layout(font=dict(size=st.session_state["font_size"]))
     ratio_between_selected_bacteria.plotly_chart(fig3, use_container_width=True)
     if split_by:
 
-        values_dict={split_category:df2_piv[df2_piv[split_by]==split_category]['ratio'].dropna().tolist() for split_category in df2_piv[split_by].unique()}
-        
-        perms=list(combinations(values_dict.keys(),2))
+        values_dict = {
+            split_category: df2_piv[df2_piv[split_by] == split_category]["ratio"]
+            .dropna()
+            .tolist()
+            for split_category in df2_piv[split_by].unique()
+        }
 
-        group1=[]
-        group2=[]
-        mean_group1=[]
-        mean_group2=[]
-        median_group1=[]
-        median_group2=[]
-        stat_list=[]
-        p_list=[]
-        statistic=ratio_between_selected_bacteria.selectbox('Choose Statistic Test',options=["Mann Whitney U",'Kruskal Wallis'])
+        perms = list(combinations(values_dict.keys(), 2))
+
+        group1 = []
+        group2 = []
+        mean_group1 = []
+        mean_group2 = []
+        median_group1 = []
+        median_group2 = []
+        stat_list = []
+        p_list = []
+        statistic = ratio_between_selected_bacteria.selectbox(
+            "Choose Statistic Test", options=["Mann Whitney U", "Kruskal Wallis"]
+        )
         for perm in perms:
             group1.append(perm[0])
             group2.append(perm[1])
@@ -402,58 +414,69 @@ def ratio_between_selected_bacteria_boxplot(df2_piv,x,y):
             mean_group2.append(np.mean(values_dict[perm[1]]))
             median_group1.append(np.median(values_dict[perm[0]]))
             median_group2.append(np.median(values_dict[perm[1]]))
-            if statistic=='Mann Whitney U':
-                stat,p=mannwhitneyu(values_dict[perm[0]],values_dict[perm[1]])
-            elif statistic=='Wilcoxon':
-                stat,p=wilcoxon(values_dict[perm[0]],values_dict[perm[1]])
-            elif statistic=='Kruskal Wallis':
-                stat,p=kruskal(values_dict[perm[0]],values_dict[perm[1]])
-            
+            if statistic == "Mann Whitney U":
+                stat, p = mannwhitneyu(values_dict[perm[0]], values_dict[perm[1]])
+            elif statistic == "Wilcoxon":
+                stat, p = wilcoxon(values_dict[perm[0]], values_dict[perm[1]])
+            elif statistic == "Kruskal Wallis":
+                stat, p = kruskal(values_dict[perm[0]], values_dict[perm[1]])
+
             stat_list.append(stat)
             p_list.append(p)
-            
-        stat_df=pd.DataFrame.from_dict({'Group1':group1,'Group2':group2,'Mean_Group1':mean_group1,'Mean_Group2':mean_group2,'Median_Group1':median_group1,'Median_Group2':median_group2,'Stat':stat_list,'P-Value':p_list})            
-        stat_df['Significant']=stat_df['P-Value']<=0.05
+
+        stat_df = pd.DataFrame.from_dict(
+            {
+                "Group1": group1,
+                "Group2": group2,
+                "Mean_Group1": mean_group1,
+                "Mean_Group2": mean_group2,
+                "Median_Group1": median_group1,
+                "Median_Group2": median_group2,
+                "Stat": stat_list,
+                "P-Value": p_list,
+            }
+        )
+        stat_df["Significant"] = stat_df["P-Value"] <= 0.05
         # stat_df['Which is heigher']=str(split_by)+": "
-        ratio_between_selected_bacteria.markdown("Groups are selected by 'Group By' dropdown above the plot")
-        ratio_between_selected_bacteria.write(stat_df,use_container_width=True)
-            
-        
-        
-        
-    
+        ratio_between_selected_bacteria.markdown(
+            "Groups are selected by 'Group By' dropdown above the plot"
+        )
+        ratio_between_selected_bacteria.write(stat_df, use_container_width=True)
+
     ratio_between_selected_bacteria.markdown("""---""")
 
 
 def correlation_scatter_between_bacteria_and_metadata_parameter():
     # Scatter plot between one selected bacteria and any column in the metadata
     correlation_to_metadata_scatter = st.container()
-    df1 = st.session_state['filtered_df'].pivot(index=st.session_state['meta_columns'], columns=["OTU"], values="RA")
+    df1 = st.session_state["filtered_df"].pivot(
+        index=st.session_state["meta_columns"], columns=["OTU"], values="RA"
+    )
 
     df2_piv = df1.reset_index()
     correlation_to_metadata_scatter.subheader(
         f"Correlate any bacteria with any metadata column"
     )
-    if "SampleDay" in st.session_state['meta_columns']:
-        loc = st.session_state['meta_columns'].index("SampleDay")
+    if "SampleDay" in st.session_state["meta_columns"]:
+        loc = st.session_state["meta_columns"].index("SampleDay")
     else:
         loc = 0
-    if "DonorName" in st.session_state['meta_columns']:
-        loc2 = st.session_state['meta_columns'].index("DonorName")
+    if "DonorName" in st.session_state["meta_columns"]:
+        loc2 = st.session_state["meta_columns"].index("DonorName")
     else:
         loc2 = 2
     bacteria_picker = correlation_to_metadata_scatter.selectbox(
         label="Pick Bacteria",
-        options=st.session_state['sorter'][:],
+        options=st.session_state["sorter"][:],
         index=0,
         key="bac_to_correlate_to_meta",
     )
     correlate_to, color, marker = correlation_to_metadata_scatter.columns(3)
     plot_type, _2, marker_size = correlation_to_metadata_scatter.columns(3)
-    
+
     correlate_to_selection = correlate_to.selectbox(
         label="Correlate to",
-        options=st.session_state['meta_columns'],
+        options=st.session_state["meta_columns"],
         index=loc,
         key="correleta_to_what_meta_column",
     )  # 7
@@ -462,13 +485,13 @@ def correlation_scatter_between_bacteria_and_metadata_parameter():
     )
     color_by_picker = color.selectbox(
         label="Color by(for the Heatmap this is the Y Axis Parameter)",
-        options=[None] + st.session_state['meta_columns'],
+        options=[None] + st.session_state["meta_columns"],
         index=loc2,
         key="color_by_what_meta_column",
     )
     marker_picker = marker.selectbox(
         label="Marker",
-        options=[None] + st.session_state['meta_columns'],
+        options=[None] + st.session_state["meta_columns"],
         index=0,
         key="marker_by_what_meta_column",
     )
@@ -493,7 +516,7 @@ def correlation_scatter_between_bacteria_and_metadata_parameter():
             df2_piv.sort_values(by=correlate_to_selection),
             x=correlate_to_selection,
             y=bacteria_picker,
-            hover_data=st.session_state['meta_columns'],
+            hover_data=st.session_state["meta_columns"],
             color=color_by_picker,
             symbol=marker_picker,
             color_discrete_sequence=color_seq,
@@ -514,21 +537,16 @@ def correlation_scatter_between_bacteria_and_metadata_parameter():
             df2_piv.sort_values(by=correlate_to_selection),
             x=correlate_to_selection,
             y=bacteria_picker,
-            hover_data=st.session_state['meta_columns'],
+            hover_data=st.session_state["meta_columns"],
             color=color_by_picker,
             # symbol=marker_picker,
             color_discrete_sequence=color_seq,
         )
-    plot.update_layout(
-        font=dict(
-            size=st.session_state['font_size']
-        ),
-    )
+    plot.update_layout(font=dict(size=st.session_state["font_size"]),)
     plot.layout.yaxis.title = plot.layout.yaxis.title["text"].split(";")[-1]
     plot.update_layout(plot_bgcolor="white")
     plot.update_traces(marker_size=marker_size)
     correlation_to_metadata_scatter.plotly_chart(plot, use_container_width=True)
-
 
     transformation = correlation_to_metadata_scatter.selectbox(
         "Choose Transformation for Heatmap",
@@ -541,7 +559,7 @@ def correlation_scatter_between_bacteria_and_metadata_parameter():
     boolean = correlation_to_metadata_scatter.checkbox(
         "Yes/No Heatmap", value=False, key="boolean_heatmap"
     )
-    agg_func='mean'
+    agg_func = "mean"
     if grayscale:
         color_seq_heatmap = px.colors.sequential.gray_r
     else:
@@ -552,48 +570,50 @@ def correlation_scatter_between_bacteria_and_metadata_parameter():
         val = bacteria_picker + "_log2"
     elif transformation == "Log10":
         val = bacteria_picker + "_log10"
-    
+
     # fig.layout.coloraxis.colorbar.title = "log2RA"
-    
+
     df_heatmap = df2_piv.pivot_table(
         columns=correlate_to_selection,
         index=color_by_picker,
         values=val,
         aggfunc=agg_func,
     )
-    if boolean:   
+    if boolean:
         # df2_piv[val]=df2_piv[val].astype(bool)
         # agg_func=np.any
-        df_heatmap=df_heatmap.replace(np.nan,0).astype(bool).astype(int)
+        df_heatmap = df_heatmap.replace(np.nan, 0).astype(bool).astype(int)
     # st.write(df_heatmap.astype(str))
-        
+
     df_heatmap.columns = df_heatmap.columns.astype(str)
     df_heatmap.index = df_heatmap.index.astype(str)
-    change=correlation_to_metadata_scatter.checkbox("calculate change")
+    change = correlation_to_metadata_scatter.checkbox("calculate change")
     if change:
         if boolean:
             correlation_to_metadata_scatter.error("Disable YES/NO heatmap")
             st.stop()
-        ref=correlation_to_metadata_scatter.selectbox("select reference",options=df_heatmap.columns.tolist())
-        df_heatmap_change=df_heatmap.subtract(df_heatmap[ref],axis='index')
-        
-    df=df_heatmap_change if change else df_heatmap
+        ref = correlation_to_metadata_scatter.selectbox(
+            "select reference", options=df_heatmap.columns.tolist()
+        )
+        df_heatmap_change = df_heatmap.subtract(df_heatmap[ref], axis="index")
+
+    df = df_heatmap_change if change else df_heatmap
     fig1 = px.imshow(
         df,
         x=df.columns,
         y=df.index,
-        color_continuous_scale= px.colors.sequential.RdBu if change else color_seq_heatmap,
+        color_continuous_scale=px.colors.sequential.RdBu
+        if change
+        else color_seq_heatmap,
         color_continuous_midpoint=0 if change else None,
         aspect="auto",
         title=bacteria_picker.split(";")[-1],
     )
-    fig1.layout.coloraxis.colorbar.tickformat='.2E'
+    fig1.layout.coloraxis.colorbar.tickformat = ".2E"
     fig1.update_layout(
         plot_bgcolor="white",
         autosize=True,
-        font=dict(
-            size=st.session_state['font_size']
-        )
+        font=dict(size=st.session_state["font_size"]),
     )
 
     correlation_to_metadata_scatter.plotly_chart(fig1, use_container_width=True)
@@ -612,13 +632,13 @@ def correlation_scatter_between_ratio_and_metadata_parameter(df2_piv):
     correlate_to1, color1 = ratio_correlation_to_metadata_scatter.columns(2)
     correlate_to_selection1 = correlate_to1.selectbox(
         label="Correlate to ",
-        options=st.session_state['meta_columns'],
+        options=st.session_state["meta_columns"],
         index=0,
         key="correlate_ratio_to_what_meta_column",
     )  # 7
     color_by_picker1 = color1.selectbox(
         label="Color by ",
-        options=[None] + st.session_state['meta_columns'],
+        options=[None] + st.session_state["meta_columns"],
         index=2,
         key="color_by_ratio_correlation_plot",
     )
@@ -632,14 +652,10 @@ def correlation_scatter_between_ratio_and_metadata_parameter(df2_piv):
         df2_piv.sort_values(by=correlate_to_selection1),
         x=correlate_to_selection1,
         y="ratio",
-        hover_data=st.session_state['meta_columns'],
+        hover_data=st.session_state["meta_columns"],
         color=color_by_picker1,
     )
-    plot.update_layout(
-        font=dict(
-            size=st.session_state['font_size']
-        )
-    )
+    plot.update_layout(font=dict(size=st.session_state["font_size"]))
     plot.layout.yaxis.title = plot.layout.yaxis.title["text"].split(";")[-1]
     ratio_correlation_to_metadata_scatter.plotly_chart(plot, use_container_width=True)
     ratio_correlation_to_metadata_scatter.markdown("""---""")
@@ -698,6 +714,7 @@ def save_and_upload_settings():
                 args=(uploaded_settings,),
             )
 
+
 def apply_uploaded_settings(json_settings):
     failed = []
     succeeded = []
@@ -714,51 +731,61 @@ def apply_uploaded_settings(json_settings):
         save_and_use_settings.error(
             f"Failed to upload the following settings: {failed}"
         )
-        
+
+
 def bacteria_ratios():
     ratios_bac_selection = st.container()
     ratios_bac_selection.subheader("Select Bacteria to Compare")
     with ratios_bac_selection.form("Select Bacteria to Compare"):
         x = st.selectbox(
-            label="Bacteria 1", options=st.session_state['sorter'][:], key="bac1.1"
+            label="Bacteria 1", options=st.session_state["sorter"][:], key="bac1.1"
         )
         y = st.selectbox(
-            label="Bacteria 2", options=st.session_state['sorter'][:], index=1, key="bac2.1"
+            label="Bacteria 2",
+            options=st.session_state["sorter"][:],
+            index=1,
+            key="bac2.1",
         )
         st.form_submit_button("Apply")
-        
-        
-    df1 = st.session_state['filtered_df'].pivot(index=st.session_state['meta_columns'], columns=["OTU"], values="RA")
+
+    df1 = st.session_state["filtered_df"].pivot(
+        index=st.session_state["meta_columns"], columns=["OTU"], values="RA"
+    )
     df2_piv = df1.reset_index()
     df2_piv["ratio"] = df2_piv[x] / df2_piv[y]
-    df2_piv["ratio"]=df2_piv["ratio"].replace(np.inf, np.nan)
-    cor_ratio_radio=st.radio("Choose plot",options=['Ratios Boxplot','Correlation of ratio to metadata',])
-    
-    if cor_ratio_radio=='Ratios Boxplot':
+    df2_piv["ratio"] = df2_piv["ratio"].replace(np.inf, np.nan)
+    cor_ratio_radio = st.radio(
+        "Choose plot", options=["Ratios Boxplot", "Correlation of ratio to metadata",]
+    )
+
+    if cor_ratio_radio == "Ratios Boxplot":
         # ra_plot_of_selected_bacteria(df2_piv,x,y)
-        ratio_between_selected_bacteria_boxplot(df2_piv,x,y)
-    elif cor_ratio_radio=='Correlation of ratio to metadata':
+        ratio_between_selected_bacteria_boxplot(df2_piv, x, y)
+    elif cor_ratio_radio == "Correlation of ratio to metadata":
         # correlation_scatter_between_selected_baceria(df2_piv,x,y)
         correlation_scatter_between_ratio_and_metadata_parameter(df2_piv)
-    
+
+
 # %%
 
-menu={
-    'DataFrame':show_df,
-    'Relative Abundance':show_ra_of_all,
-    'Most Abundant Bacteria':top_bacteria_plot,
-    'Correlation between most abundant bacteria':correlation_heatmap_between_top_bac,
-    'Correlation between two bacteria':correlate_two_bacteria,
-    'Ratios between two bacteria':bacteria_ratios,
-    'Correlate Bacterium to Metadata':correlation_scatter_between_bacteria_and_metadata_parameter
-    
+menu = {
+    "DataFrame": show_df,
+    "Relative Abundance": show_ra_of_all,
+    "Most Abundant Bacteria": top_bacteria_plot,
+    "Correlation between most abundant bacteria": correlation_heatmap_between_top_bac,
+    "Correlation between two bacteria": correlate_two_bacteria,
+    "Ratios between two bacteria": bacteria_ratios,
+    "Correlate Bacterium to Metadata": correlation_scatter_between_bacteria_and_metadata_parameter,
 }
+
+
 def main():
 
-    if 'filtered_df' in st.session_state:
-        menu_radio=st.sidebar.radio("Menu",options=menu.keys())
+    if "filtered_df" in st.session_state:
+        menu_radio = st.sidebar.radio("Menu", options=menu.keys())
         general_plot_settings()
         menu[menu_radio]()
-        
-if __name__=='__main__':
-        main()
+
+
+if __name__ == "__main__":
+    main()
