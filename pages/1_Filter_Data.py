@@ -48,7 +48,7 @@ def main():
 #     st.session_state['filtered_df']=sort_samples(st.session_state['filtered_df'])
 
 if __name__ == "__main__":
-    if "df" in st.session_state:
+    if "data" in st.session_state:
         main()
     else:
         import time
