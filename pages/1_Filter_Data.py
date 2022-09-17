@@ -29,10 +29,10 @@ def main():
     st.session_state["sorter_mean"], st.session_state["sorter_median"] = sort_samples(
         st.session_state["data"]
     )
-    st.session_state['df']=pd.merge(st.session_state['filtered_metadata'],st.session_state['data'],on='SampleID',how='inner')
+    st.session_state['filtered_df']=pd.merge(st.session_state['filtered_metadata'],st.session_state['data'],on='SampleID',how='inner')
     st.session_state['meta_columns']=st.session_state['filtered_metadata'].columns.tolist()
     for col in st.session_state['meta_columns']:
-        st.session_state['df'][col]=st.session_state['df'][col].astype('category')
+        st.session_state['filtered_df'][col]=st.session_state['filtered_df'][col].astype('category')
     st.sidebar.metric("Total No of Samples ", st.session_state.metadata.shape[0])
     st.sidebar.metric("Filtered Samples", st.session_state.filtered_metadata.shape[0])
     def memory_usage(df):
@@ -42,7 +42,7 @@ def main():
         st.write(f"filtered_metadata : {memory_usage(st.session_state['filtered_metadata'])}")
         st.write(f"metadata : {memory_usage(st.session_state['metadata'])}")
         st.write(f"data : {memory_usage(st.session_state['data'])}")
-        st.write(f"df : {memory_usage(st.session_state['df'])}")
+        st.write(f"df : {memory_usage(st.session_state['filtered_df'])}")
 
 # if 'filtered_df' in st.session_state:
 #     st.session_state['filtered_df']=sort_samples(st.session_state['filtered_df'])
