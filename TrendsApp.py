@@ -1,5 +1,6 @@
 # %%
 import os
+from pickletools import float8
 import pandas as pd
 import plotly.express as px
 import numpy as np
@@ -40,43 +41,53 @@ def st_upload_file():
     upload_column = st.container()
     upload_column.subheader("File Upload")
     upload_column.text("Upload file to start working")
-    upload_data_widget = upload_column.file_uploader(label="Upload File", type=["csv"])
-    # message=None
-    if upload_data_widget:
-        open_file(upload_data_widget.getvalue())
-        st.success("Custom Data Loaded")
+    # upload_data_widget = upload_column.file_uploader(label="Upload File", type=["csv"])
+    
+    
+    upload_metadata = upload_column.file_uploader(label="Upload Metadata", type=["csv"])
+    if upload_metadata:
+        st.session_state['metadata']=open_file(upload_metadata.getvalue())
+        upload_data = upload_column.file_uploader(label="Upload Data", type=["csv"])
+        if upload_data:
+            st.session_state['data']=open_file(upload_data.getvalue())
+            
+            # st.session_state['df']=pd.merge(st.session_state['metadata'],st.session_state['data'],on='SampleID')
+
+    # if upload_data_widget:
+    #     st.session_state['df']=open_file(upload_data_widget.getvalue())
+    #     st.success("Custom Data Loaded")
     sample_data = upload_column.checkbox("Use Sample Data")
     if sample_data:
         st.session_state["df"] = pd.read_csv("sample_data.csv")
         st.success("Using test data")
     upload_column.markdown("""---""")
 
-    if "df" in st.session_state:
+    if "data" in st.session_state:
         # if st.button("Proceed"):
-        st.session_state["df"] = process_data(st.session_state["df"])
+        # st.session_state["df"] = process_data(st.session_state["df"])
         switch_page("Filter Data")
 
 
 @st.experimental_memo(show_spinner=False,)  # allow_output_mutation=True)
 def open_file(file_uploader_data):
-    st.session_state["df"] = pd.read_csv(BytesIO(file_uploader_data), engine="python")
-
-
-def process_data(df):
-
-    # Metadata columns astype str
-    meta_columns = [
-        x
-        for x in st.session_state["df"].columns.tolist()
-        if x not in ["OTU", "level_1", "RA", "Notes"]
-    ]
-
-    st.session_state["df"][meta_columns] = st.session_state["df"][meta_columns].astype(
-        str
-    )
-    st.session_state["meta_columns"] = meta_columns
-
+    df = pd.read_csv(BytesIO(file_uploader_data), engine="python",dtype='object')
     return df
+
+# def process_data(df):
+
+#     # Metadata columns astype str
+#     meta_columns = [
+#         x
+#         for x in st.session_state["df"].columns.tolist()
+#         if x not in ["OTU", "level_1", "RA", "Notes"]
+#     ]
+
+#     # st.session_state["df"][meta_columns] = st.session_state["df"][meta_columns].astype(
+#     #     str
+#     # )
+#     st.session_state["meta_columns"] = meta_columns
+
+#     return df
 
 
 def main():

@@ -31,7 +31,9 @@ def general_plot_settings():
 
 
 def show_df():
-    st.write(st.session_state["filtered_df"].astype(str))
+    # st.write(st.session_state["filtered_df"].astype(str))
+    # st.write(f"Memory Usage of dataframe: {round(st.session_state['df'].memory_usage(deep=True).sum() / 1024 ** 2, 2)}")
+    pass
 
 
 def show_ra_of_all():
@@ -769,7 +771,7 @@ def bacteria_ratios():
 # %%
 
 menu = {
-    "DataFrame": show_df,
+    #"DataFrame": show_df,
     "Relative Abundance": show_ra_of_all,
     "Most Abundant Bacteria": top_bacteria_plot,
     "Correlation between most abundant bacteria": correlation_heatmap_between_top_bac,

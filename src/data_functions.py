@@ -6,6 +6,7 @@ import streamlit as st
 
 
 def sort_samples(df):
+    df['RA']=df['RA'].astype(float)
     sorter_mean = (
         df.groupby("OTU")
         .agg({"RA": "mean"})

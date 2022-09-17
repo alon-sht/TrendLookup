@@ -1,4 +1,5 @@
 # %%
+from unicodedata import category
 import pandas as pd
 import streamlit as st
 from PIL import Image
@@ -24,13 +25,24 @@ st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 
 # st.write(st.session_state)
 def main():
-    st.session_state["filtered_df"] = filter_dataframe(st.session_state["df"], None)
+    st.session_state["filtered_metadata"] = filter_dataframe(st.session_state["metadata"], None)
     st.session_state["sorter_mean"], st.session_state["sorter_median"] = sort_samples(
-        st.session_state["filtered_df"]
+        st.session_state["data"]
     )
-    st.sidebar.metric("DataFrame Length", st.session_state.df.shape[0])
-    st.sidebar.metric("Filtered DataFrame", st.session_state.filtered_df.shape[0])
-
+    st.session_state['df']=pd.merge(st.session_state['filtered_metadata'],st.session_state['data'],on='SampleID',how='inner')
+    st.session_state['meta_columns']=st.session_state['filtered_metadata'].columns.tolist()
+    for col in st.session_state['meta_columns']:
+        st.session_state['df'][col]=st.session_state['df'][col].astype('category')
+    st.sidebar.metric("Total No of Samples ", st.session_state.metadata.shape[0])
+    st.sidebar.metric("Filtered Samples", st.session_state.filtered_metadata.shape[0])
+    def memory_usage(df):
+        return(round(df.memory_usage(deep=True).sum() / 1024 ** 2, 2))
+    
+    with st.expander("Memory Usage Monitor"):
+        st.write(f"filtered_metadata : {memory_usage(st.session_state['filtered_metadata'])}")
+        st.write(f"metadata : {memory_usage(st.session_state['metadata'])}")
+        st.write(f"data : {memory_usage(st.session_state['data'])}")
+        st.write(f"df : {memory_usage(st.session_state['df'])}")
 
 # if 'filtered_df' in st.session_state:
 #     st.session_state['filtered_df']=sort_samples(st.session_state['filtered_df'])

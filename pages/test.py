@@ -72,3 +72,33 @@ fig = px.density_heatmap(
 )
 st.plotly_chart(fig, use_container_width=True)
 # %%
+
+
+
+column_dtypes = {'OTU':'category', 
+                 'SampleID':'category', 
+                 'RA':'float16', 
+                 'Notes':'category', 
+                 'ExperimentName':'category', 
+                 'Date':'object',
+                 'OriginalSampleTypeName':'category', 
+                 'VesselTypeName':'category', 
+                 'VesselName':'category',
+                'DilutionDenominator':'category', 
+                'SampleDay':'category', 
+                'SampleTimePoint':'category', 
+                'Day/TimePoint':'category',
+                'SampleTimeHourOfDay':'object', 
+                'SampleTypeName':'category', 
+                'SamplingProtocolName':'category',
+                'MediumName':'category', 
+                'Replicates':'category', 
+                'ReplicateGroup':'category', 
+                'DonorName':'category', 
+                'ZymoID':'category',
+                'VesselVolume':'category', 
+                'VesselStirring':'category', 
+                'InitialpH':'category', 
+                'SetTemperature':'category',
+                'FedBatch':'category',}
+# %%
