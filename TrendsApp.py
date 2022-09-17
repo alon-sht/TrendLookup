@@ -42,30 +42,32 @@ def st_upload_file():
     upload_column.subheader("File Upload")
     upload_column.text("Upload file to start working")
     # upload_data_widget = upload_column.file_uploader(label="Upload File", type=["csv"])
-    
+    sample_data = upload_column.checkbox("Use Sample Data",key='sample_data')
     
     upload_metadata = upload_column.file_uploader(label="Upload Metadata", type=["csv"])
     if upload_metadata:
         st.session_state['metadata']=open_file(upload_metadata.getvalue())
-        upload_data = upload_column.file_uploader(label="Upload Data", type=["csv"])
-        if upload_data:
-            st.session_state['data']=open_file(upload_data.getvalue())
+    upload_data = upload_column.file_uploader(label="Upload Data", type=["csv"])
+    if upload_data:
+        st.session_state['data']=open_file(upload_data.getvalue())
             
             # st.session_state['df']=pd.merge(st.session_state['metadata'],st.session_state['data'],on='SampleID')
 
     # if upload_data_widget:
     #     st.session_state['df']=open_file(upload_data_widget.getvalue())
     #     st.success("Custom Data Loaded")
-    sample_data = upload_column.checkbox("Use Sample Data")
+    
     if sample_data:
-        st.session_state["df"] = pd.read_csv("sample_data.csv")
-        st.success("Using test data")
+        temp=pd.read_csv("sample_data.csv")
+        st.session_state["metadata"] = temp[['SampleID','Notes','ExperimentName','Day/TimePoint','ReplicateGroup','DonorName']].drop_duplicates()
+        st.session_state["data"] = temp[['OTU','RA','SampleID']]
+        del temp
     upload_column.markdown("""---""")
 
-    if "data" in st.session_state:
-        # if st.button("Proceed"):
+    if "data" and 'metadata' in st.session_state:
+        if st.button("Proceed"):
         # st.session_state["df"] = process_data(st.session_state["df"])
-        switch_page("Filter Data")
+            switch_page("Filter Data")
 
 
 @st.experimental_memo(show_spinner=False,)  # allow_output_mutation=True)

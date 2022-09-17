@@ -6,11 +6,24 @@ import pandas as pd
 from scipy.stats import spearmanr, mannwhitneyu, kruskal, wilcoxon
 from itertools import combinations, combinations
 from src.functions import update_session_state
+from PIL import Image
 
 from src.data_functions import sort_samples
 
 update_session_state(update_all=True)
 
+
+st.set_page_config(
+    layout="wide", page_title="TrendAnalysis", page_icon=Image.open("fav.ico")
+)
+hide_streamlit_style = """
+              <style>
+              #MainMenu {visibility: hidden;}
+              footer {visibility: hidden;}
+
+            </style>
+            """
+st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 # %%
 # st.write(st.session_state
 #
@@ -93,6 +106,7 @@ def top_bacteria_plot():
             autorange="reversed", dtick=1,
         )
         fig_all.update_xaxes(title="Relative Abundance")
+        fig_all.update_layout(yaxis={'categoryorder':'total descending'})
         top_bacteria_boxplot.plotly_chart(fig_all, use_container_width=True)
     top_bacteria_boxplot.markdown("""---""")
 
@@ -589,13 +603,13 @@ def correlation_scatter_between_bacteria_and_metadata_parameter():
 
     df_heatmap.columns = df_heatmap.columns.astype(str)
     df_heatmap.index = df_heatmap.index.astype(str)
-    change = correlation_to_metadata_scatter.checkbox("calculate change")
+    change = correlation_to_metadata_scatter.checkbox("Calculate Change from Reference")
     if change:
         if boolean:
             correlation_to_metadata_scatter.error("Disable YES/NO heatmap")
             st.stop()
         ref = correlation_to_metadata_scatter.selectbox(
-            "select reference", options=df_heatmap.columns.tolist()
+            "Select Reference", options=df_heatmap.columns.tolist()
         )
         df_heatmap_change = df_heatmap.subtract(df_heatmap[ref], axis="index")
 
