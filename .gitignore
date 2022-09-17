@@ -2,3 +2,4 @@
 *all_donors L7.csv
 *all_samples L6.csv
 *data/
+*secrets/config.yaml

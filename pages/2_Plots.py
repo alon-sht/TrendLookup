@@ -804,4 +804,5 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    if st.session_state["authentication_status"]:
+        main()

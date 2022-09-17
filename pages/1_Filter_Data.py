@@ -48,15 +48,16 @@ def main():
 #     st.session_state['filtered_df']=sort_samples(st.session_state['filtered_df'])
 
 if __name__ == "__main__":
-    if "data" in st.session_state:
-        main()
-    else:
-        import time
+    if st.session_state["authentication_status"]:
+        if "data" in st.session_state:
+            main()
+        else:
+            import time
 
-        seconds_to_wait = 4
-        for i in range(seconds_to_wait):
-            st.error(
-                f"# Data not uploaded. Returning to homepage in {seconds_to_wait-i} seconds"
-            )
-            time.sleep(1)
-        switch_page("TrendsApp")
+            seconds_to_wait = 4
+            for i in range(seconds_to_wait):
+                st.error(
+                    f"# Data not uploaded. Returning to homepage in {seconds_to_wait-i} seconds"
+                )
+                time.sleep(1)
+            switch_page("TrendsApp")

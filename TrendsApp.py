@@ -1,17 +1,15 @@
 # %%
 import os
-from pickletools import float8
 import pandas as pd
-import plotly.express as px
-import numpy as np
-from scipy.stats import spearmanr, mannwhitneyu, kruskal, wilcoxon
 import streamlit as st
 from PIL import Image
-from src.check_password import check_password
+# from src.check_password import check_password
 from io import BytesIO
 from itertools import combinations, combinations
 from streamlit_extras.switch_page_button import switch_page
 from src.functions import reset_state_to_default
+import streamlit_authenticator as stauth
+
 
 # %%
 
@@ -104,4 +102,35 @@ def main():
 # st.write(list(st.session_state.keys()))
 
 if __name__ == "__main__":
-    main()
+    import yaml
+    with open('secrets/config.yaml') as file:
+        config = yaml.load(file, Loader=stauth.SafeLoader)
+
+    authenticator = stauth.Authenticate(
+        config['credentials'],
+        config['cookie']['name'],
+        config['cookie']['key'],
+        config['cookie']['expiry_days'],
+        config['preauthorized']
+    )
+    name, authentication_status, username = authenticator.login('Login', 'main')
+
+    # if authentication_status:
+    #     authenticator.logout('Logout', 'main')
+    #     st.write(f'Welcome *{name}*')
+    #     # st.title('Some content')
+    # elif authentication_status == False:
+    #     st.error('Username/password is incorrect')
+    # elif authentication_status == None:
+    #     st.warning('Please enter your username and password')
+        
+    if st.session_state["authentication_status"]:
+        authenticator.logout('Logout', 'main')
+        st.write(f'Welcome *{st.session_state["name"]}*')
+        main()
+        
+    elif st.session_state["authentication_status"] == False:
+        st.error('Username/password is incorrect')
+    elif st.session_state["authentication_status"] == None:
+        st.warning('Please enter your username and password')
+    
