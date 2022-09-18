@@ -125,8 +125,15 @@ if __name__ == "__main__":
     #     st.warning('Please enter your username and password')
         
     if st.session_state["authentication_status"]:
-        authenticator.logout('Logout', 'main')
         st.write(f'Welcome *{st.session_state["name"]}*')
+        authenticator.logout('Logout', 'main')
+        # if st.button("Change Password"):
+        # with st.expander("Change Password"):
+        #     try:
+        #         if authenticator.reset_password(username, 'Reset password'):
+        #             st.success('Password modified successfully')
+        #     except Exception as e:
+        #         st.error(e)
         main()
         
     elif st.session_state["authentication_status"] == False:

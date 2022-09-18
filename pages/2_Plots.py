@@ -31,7 +31,7 @@ def general_plot_settings():
     plot_settings = st.sidebar.expander("Plot Settings")
 
     font_size = plot_settings.slider(
-        label="Font Size", min_value=1, max_value=30, value=12, key="font_size"
+        label="Font Size", min_value=1, max_value=30, value=14, key="font_size"
     )
     sorter = plot_settings.radio(
         "Sort by", options=["Mean", "Median"], key="sorter_radio", horizontal=True
@@ -41,7 +41,46 @@ def general_plot_settings():
         if sorter == "Mean"
         else st.session_state["sorter_median"]
     )
+def sort_settings():
+    st.session_state["filtered_df"] = st.session_state["filtered_df"].sort_values(
+                by=["RA"],
+                ascending=[False],
+            )
+    with st.sidebar.form("Sort Settings"):
+        sort1, sort2, sort3 = st.columns(3)
+        sort_by1 = sort1.selectbox(
+            "Sort 1",key='sort1',
+            options=st.session_state["metadata"].columns.tolist(),
+            index=st.session_state["metadata"].columns.tolist().index("SampleDay")
+            if "SampleDay" in st.session_state["metadata"].columns
+            else 0,
+        )
+        sort_by2 = sort2.selectbox(
+            "Sort 2", key='sort2', options=st.session_state["metadata"].columns.tolist()
+        )
+        sort_by3 = sort3.selectbox(
+            "Sort 3", key='sort3',options=st.session_state["metadata"].columns.tolist()
+        )
+        ascending1, ascending2, ascending3 = st.columns(3)
+        ascending_bool1 = ascending1.checkbox("Ascending 1", value=True,key='sort_asc_1',)
+        ascending_bool2 = ascending2.checkbox("Ascending 2", value=True,key='sort_asc_2',)
+        ascending_bool3 = ascending3.checkbox("Ascending 3", value=True,key='sort_asc_3',)
 
+        st.form_submit_button("Apply")
+        st.session_state["filtered_df"] = st.session_state["filtered_df"].sort_values(
+                by=[sort_by1, sort_by2, sort_by3],
+                ascending=[ascending_bool1, ascending_bool2, ascending_bool3],
+            )
+def parameters_to_show_on_hover():
+    with st.sidebar.expander("Parameters to show on hover"):
+        with st.form("hover_data"):
+            st.multiselect(
+                "Columns to show on hover",
+                options=st.session_state["meta_columns"],
+                default=st.session_state["meta_columns"][:10],
+                key="cols_to_show_on_hover",
+            )
+            st.form_submit_button("Apply")
 
 def show_df():
     # st.write(st.session_state["filtered_df"].astype(str))
@@ -67,6 +106,7 @@ def show_ra_of_all():
                 y="RA",
                 color="OTU",
                 barmode="stack",
+                hover_data=st.session_state["cols_to_show_on_hover"],
             )
             fig.update_xaxes(dtick=1,)
             # fig.show(renderer="svg")
@@ -289,7 +329,7 @@ def correlation_scatter_between_selected_baceria(df, x, y):
         x=x,
         y=y,
         color=color,
-        hover_data=st.session_state["meta_columns"],
+        hover_data=st.session_state["cols_to_show_on_hover"],
         trendline="ols",
         trendline_scope="overall",
     )
@@ -303,7 +343,7 @@ def correlation_scatter_between_selected_baceria(df, x, y):
         x=x,
         y=y,
         color=color,
-        hover_data=st.session_state["meta_columns"],
+        hover_data=st.session_state["cols_to_show_on_hover"],
         trendline="ols",
     )
     fig2_trend_each.layout.xaxis.title = fig2_trend_each.layout.xaxis.title[
@@ -384,7 +424,7 @@ def ratio_between_selected_bacteria_boxplot(df2_piv, x, y):
             df2_piv,
             x=split_by,
             y="ratio",
-            hover_data=st.session_state["meta_columns"],
+            hover_data=st.session_state["cols_to_show_on_hover"],
             color=color_by2,
         )
         fig3.update_traces(boxmean=True)
@@ -393,7 +433,7 @@ def ratio_between_selected_bacteria_boxplot(df2_piv, x, y):
             df2_piv,
             x=split_by,
             y="ratio",
-            hover_data=st.session_state["meta_columns"],
+            hover_data=st.session_state["cols_to_show_on_hover"],
             color=color_by2,
         )
     fig3.update_xaxes(matches=None, autorange=True)
@@ -532,7 +572,7 @@ def correlation_scatter_between_bacteria_and_metadata_parameter():
             df2_piv.sort_values(by=correlate_to_selection),
             x=correlate_to_selection,
             y=bacteria_picker,
-            hover_data=st.session_state["meta_columns"],
+            hover_data=st.session_state["cols_to_show_on_hover"],
             color=color_by_picker,
             symbol=marker_picker,
             color_discrete_sequence=color_seq,
@@ -553,7 +593,7 @@ def correlation_scatter_between_bacteria_and_metadata_parameter():
             df2_piv.sort_values(by=correlate_to_selection),
             x=correlate_to_selection,
             y=bacteria_picker,
-            hover_data=st.session_state["meta_columns"],
+            hover_data=st.session_state["cols_to_show_on_hover"],
             color=color_by_picker,
             # symbol=marker_picker,
             color_discrete_sequence=color_seq,
@@ -668,7 +708,7 @@ def correlation_scatter_between_ratio_and_metadata_parameter(df2_piv):
         df2_piv.sort_values(by=correlate_to_selection1),
         x=correlate_to_selection1,
         y="ratio",
-        hover_data=st.session_state["meta_columns"],
+        hover_data=st.session_state["cols_to_show_on_hover"],
         color=color_by_picker1,
     )
     plot.update_layout(font=dict(size=st.session_state["font_size"]))
@@ -798,7 +838,10 @@ menu = {
 def main():
 
     if "filtered_df" in st.session_state:
+        
         menu_radio = st.sidebar.radio("Menu", options=menu.keys())
+        sort_settings()
+        parameters_to_show_on_hover()
         general_plot_settings()
         menu[menu_radio]()
 
