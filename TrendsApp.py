@@ -2,6 +2,7 @@
 import os
 import pandas as pd
 import streamlit as st
+import numpy as np
 from PIL import Image
 # from src.check_password import check_password
 from io import BytesIO
