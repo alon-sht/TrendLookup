@@ -71,6 +71,7 @@ def st_upload_file():
 @st.experimental_memo(show_spinner=False,)  # allow_output_mutation=True)
 def open_file(file_uploader_data):
     df = pd.read_csv(BytesIO(file_uploader_data), engine="python",dtype='object')
+    df.replace(np.nan,'None')
     return df
 
 # def process_data(df):
