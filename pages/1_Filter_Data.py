@@ -38,7 +38,7 @@ def main():
     def memory_usage(df):
         return(round(df.memory_usage(deep=True).sum() / 1024 ** 2, 2))
     
-    with st.expander("Memory Usage Monitor"):
+    with st.sidebar.expander("Memory Usage Monitor"):
         st.write(f"filtered_metadata : {memory_usage(st.session_state['filtered_metadata'])}")
         st.write(f"metadata : {memory_usage(st.session_state['metadata'])}")
         st.write(f"data : {memory_usage(st.session_state['data'])}")

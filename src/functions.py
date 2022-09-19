@@ -28,37 +28,45 @@ def filter_dataframe(df, columns=None, allow_single_value_widgets=False):
         filter_widgets.markdown(
             "Only showing columns that contain more than 1 unique value."
         )
-    with filter_widgets.form(key="data_filters"):
-        not_showing = []
-        for y in df[columns]:
-            opts=df[y].unique().tolist()
-            if str(y) in st.session_state:  # update value from session state if exists
-                selected_opts = [x for x in st.session_state[str(y)] if x in opts]
-            else:  # if doesnt exist use all values as defaults
-                selected_opts = opts
-            if len(df[y].unique().tolist()) > threshold:  # checks if above threshold
-                widget_dict[y] = st.multiselect(
-                    label=str(y),
-                    options=opts,
-                    default=selected_opts,
-                    key=str(y),
-                )
-                df = df[df[y].isin(widget_dict[y])]
-            else:  # if doesnt pass threshold
-                not_showing.append(y)
+    st.markdown("---")
+    # with filter_widgets.form(key="data_filters"):
+    not_showing = []
+    for y in df[columns]:
+        opts=df[y].unique().tolist()
+        if str(y) in st.session_state:  # update value from session state if exists
+            selected_opts = [x for x in st.session_state[str(y)] if x in opts]
+        else:  # if doesnt exist use all values as defaults
+            selected_opts = opts
+        if len(df[y].unique().tolist()) > threshold:  # checks if above threshold
+            widget_dict[y] = st.multiselect(
+                label=str(y),
+                options=opts,
+                default=selected_opts,
+                key=str(y),
+            )
+    
+        else:  # if doesnt pass threshold
+            not_showing.append(y)
         if not_showing:  # if the list is not empty, show this warning
             st.warning(
                 f"Not showing filters for {' '.join(not_showing)} since they only contain one unique value."
             )
-        submit_button = st.form_submit_button("Apply Filters")
-
-    # reset_button = st.sidebar.button(
-    #     "Reset All Filters",
-    #     key="reset_buttons",
-    #     on_click=reset_filter_widgets_to_default,
-    #     args=(df, columns),
-    # )
-    filter_widgets.warning(
+        # submit_button = st.form_submit_button("Apply Filters")
+    if st.button("Apply Filters"):
+        for y in df[columns]:
+            df = df[df[y].isin(widget_dict[y])]
+    if st.sidebar.button("Apply Filters "):
+        for y in df[columns]:
+            df = df[df[y].isin(widget_dict[y])]
+            
+        
+    reset_button = st.sidebar.button(
+            "Reset All Filters",
+            key="reset_buttons",
+            on_click=reset_filter_widgets_to_default,
+            args=(df, columns),
+        )
+    st.warning(
         "Dont forget to apply filters by pressing 'Apply Filters' at the bottom."
     )
     return df
