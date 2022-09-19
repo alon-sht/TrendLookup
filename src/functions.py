@@ -31,14 +31,15 @@ def filter_dataframe(df, columns=None, allow_single_value_widgets=False):
     with filter_widgets.form(key="data_filters"):
         not_showing = []
         for y in df[columns]:
+            opts=df[y].unique().tolist()
             if str(y) in st.session_state:  # update value from session state if exists
-                selected_opts = st.session_state[str(y)]
+                selected_opts = [x for x in st.session_state[str(y)] if x in opts]
             else:  # if doesnt exist use all values as defaults
-                selected_opts = df[y].unique().tolist()
+                selected_opts = opts
             if len(df[y].unique().tolist()) > threshold:  # checks if above threshold
                 widget_dict[y] = st.multiselect(
                     label=str(y),
-                    options=df[y].unique().tolist(),
+                    options=opts,
                     default=selected_opts,
                     key=str(y),
                 )
