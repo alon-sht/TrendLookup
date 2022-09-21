@@ -7,7 +7,7 @@ from scipy.stats import spearmanr, mannwhitneyu, kruskal, wilcoxon
 from itertools import combinations, combinations
 from src.functions import update_session_state
 from PIL import Image
-
+from streamlit_extras.switch_page_button import switch_page
 from src.data_functions import sort_samples
 
 update_session_state(update_all=True)
@@ -847,5 +847,8 @@ def main():
 
 
 if __name__ == "__main__":
-    if st.session_state["authentication_status"]:
-        main()
+    if 'authentication_status' in st.session_state:
+        if st.session_state["authentication_status"]:
+            main()
+    else:
+        switch_page("TrendsApp")
