@@ -376,7 +376,7 @@ def correlate_two_bacteria():
             index=1,
             key="bac2",
         )
-        st.form_submit_button("Apply")
+        apply=st.form_submit_button("Apply")
     compare_bac_selection.markdown("""---""")
     # global df2_piv
     df1 = st.session_state["filtered_df"].pivot(

@@ -62,6 +62,7 @@ if __name__ == "__main__":
                     )
                     time.sleep(1)
                 switch_page("TrendsApp")
+                
     else:
         switch_page("TrendsApp")
     
